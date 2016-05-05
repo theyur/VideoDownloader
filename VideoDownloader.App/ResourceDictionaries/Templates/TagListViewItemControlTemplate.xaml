@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:VideoDownloader.App.ResourceDictionaries.Templates"
+					xmlns:converters="clr-namespace:VideoDownloader.App.Converters">
+
+	<!--<DataTemplate x:Key="TagListViewItemControlTemplate">
+		<StackPanel Orientation="Horizontal">
+			<TextBlock Text="{Binding Path=Key, Converter={StaticResource TagConverter}}"/>
+			<TextBlock FontWeight="Bold" Text=" (" />
+			<TextBlock FontWeight="Bold" Text="{Binding Path=Value, Converter={StaticResource ValueToCountConverter}}"/>
+			<TextBlock FontWeight="Bold" Text=")" />
+		</StackPanel>
+	</DataTemplate>-->
+</ResourceDictionary>
