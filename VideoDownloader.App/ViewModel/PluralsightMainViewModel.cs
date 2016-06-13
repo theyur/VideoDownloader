@@ -32,6 +32,7 @@ namespace VideoDownloader.App.ViewModel
 		private CancellationTokenSource _cts;
 		private ObservableCollection<KeyValuePair<string, List<Result>>> _resultsByTagsPairsFilteredList;
 		private Dictionary<string, List<Result>> _resultsByTags;
+		private List<Result> _allResults;
 		private IEnumerable<Result> _currentDisplayedCourses;
 		private ObservableCollection<Result> _currentDisplayedFilteredCourses;
 		private readonly IConfigProvider _configProvider;
@@ -172,8 +173,11 @@ namespace VideoDownloader.App.ViewModel
 			{
 				if (Set(() => CoursesFilterText, ref _coursesFilterText, value))
 				{
-					CurrentDisplayedFilteredCourses = 
-						new ObservableCollection<Result>(CurrentDisplayedCourses.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())));
+					if (AllResults.Any())
+					{
+						CurrentDisplayedFilteredCourses =
+							new ObservableCollection<Result>(AllResults.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
+					}
 				}
 			}
 		}
@@ -184,6 +188,15 @@ namespace VideoDownloader.App.ViewModel
 			set
 			{
 				Set(() => ResultsByTagsPairsFilteredList, ref _resultsByTagsPairsFilteredList, value);
+			}
+		}
+
+		public List<Result> AllResults
+		{
+			get { return _allResults; }
+			set
+			{
+				Set(() => AllResults, ref _allResults, value);
 			}
 		}
 
@@ -220,13 +233,13 @@ namespace VideoDownloader.App.ViewModel
 
 		#region Command
 
-		public RelayCommand<string> CourseTagSelectedCommand { get; private set; }
+		public RelayCommand<string> CourseTagSelectedCommand { get; }
 
-		public RelayCommand OpenDownloadsFolderCommand { get; private set; }
+		public RelayCommand OpenDownloadsFolderCommand { get; }
 
-		public RelayCommand OpenSettingsWindowCommand { get; private set; }
+		public RelayCommand OpenSettingsWindowCommand { get; }
 
-		public RelayCommand<bool> ProductCheckBoxToggledCommand { get; private set; }
+		public RelayCommand<bool> ProductCheckBoxToggledCommand { get; }
 
 		public RelayCommand DownloadCourseCommand { get; set; }
 
@@ -247,6 +260,7 @@ namespace VideoDownloader.App.ViewModel
 			NumberOfSelectedCourses = 0;
 			AuthenticatedUser authenticatedUser = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatedUser>(CourseService.LoginResultJson);
 			Title = $"{authenticatedUser.CurrentUser.FirstName} {authenticatedUser.CurrentUser.LastName} ({authenticatedUser.CurrentUser.Email})";
+
 			CourseTagSelectedCommand = new RelayCommand<string>(OnCourseTagSelected);
 			CancelDownloadsCommand = new RelayCommand(OnCancelDownloads, CanCancelDownload);
 			OpenDownloadsFolderCommand = new RelayCommand(OnOpenDownloadsFolder);
@@ -256,13 +270,14 @@ namespace VideoDownloader.App.ViewModel
 
 			var allProducts = Newtonsoft.Json.JsonConvert.DeserializeObject<AllProducts>(courseService.CachedProductsJson);
 			ResultsByTags = new Dictionary<string, List<Result>>();
-
+			AllResults = new List<Result>();
 			foreach (var res in allProducts.ResultSets[0].Results)
 			{
 				string toolsString = res.Tools ?? "not specified";
 				var tools = toolsString.Split('|');
 				foreach (var t in tools)
 				{
+					AllResults.Add(res);
 					ResultsByTags.GetOrCreate(t).Add(res);
 				}
 			}
@@ -342,7 +357,7 @@ namespace VideoDownloader.App.ViewModel
 				CurrentDisplayedFilteredCourses =
 					new ObservableCollection<Result>(CurrentDisplayedCourses.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
 			}
-
+			
 			AnyCourseSelected = (NumberOfSelectedCourses > 0);
 		}
 

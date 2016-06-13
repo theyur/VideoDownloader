@@ -329,7 +329,7 @@ namespace VideoDownloader.App.BL
 						if (response.Headers.TryGetValues("Set-Cookie", out values))
 						{
 							var cookies = values.First().Split(';');
-							_cookies = cookies[0];
+							_cookies += $"{cookies[0]}; ";
 						}
 						if (response.Headers.TryGetValues("Location", out values))
 						{
