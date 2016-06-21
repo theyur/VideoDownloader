@@ -6,6 +6,7 @@
 	<converters:AuthorArrayConverter x:Key="AuthorArrayConverter"/>
 	<converters:HasTranscriptConverter x:Key="TranscriptsConverter"/>
 	<converters:BoolToVisibleConverter x:Key="BoolToVisibleConverter"/>
+	<converters:ProgressConverter x:Key="ProgressConverter"/>
 	<converters:IntToTimeSpanStringConverter x:Key="IntToTimeSpanStringConverter"/>
 	<converters:IsoTimeToTimeSpanConverter x:Key="IsoTimeToTimeSpanConverter"/>
 	

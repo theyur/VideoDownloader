@@ -71,7 +71,7 @@
 					 Grid.ColumnSpan="2"/>
 			
 			<ListView Grid.Row="2"
-				  Margin="5 10 10 10"
+				  Margin="5 5 10 5"
 				  Grid.Column="1"
 				  Grid.RowSpan="4"
 				  VerticalAlignment="Stretch"
@@ -113,13 +113,14 @@
 				TextWrapping="Wrap"
 				Height="40"
 				Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibleConverter}}">
-				<Run Text="Downloading " />
+				<Run Text="{Binding CurrentAction}" />
+				<Run Text=" "/>
 				<Run Text="{Binding DownloadingCourse}" />
 				</TextBlock>
 
 				<WrapPanel>
 					<TextBlock Margin="5 0 0 5" Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibleConverter}}">
-					<Run Text="{Binding DownloadingProgress}"/>
+					<Run Text="{Binding DownloadingProgress, Converter={StaticResource ProgressConverter}}"/>
 					<Run Text="%"/>
 					</TextBlock>
 					<TextBlock Margin="5 0 0 5" Visibility="{Binding CurrentTimeout, Converter={StaticResource BoolToVisibleConverter}}">

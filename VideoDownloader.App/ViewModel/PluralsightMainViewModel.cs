@@ -39,6 +39,7 @@ namespace VideoDownloader.App.ViewModel
 		private bool _isDownloading;
 		private bool _anyCourseSelected;
 		private string _downloadingCourse;
+		private string _currentAction;
 		private int _downloadingProgress;
 		private int _currentTimeout;
 		private bool _canDownload;
@@ -105,6 +106,20 @@ namespace VideoDownloader.App.ViewModel
 
 		}
 
+		public string CurrentAction
+		{
+			get
+			{
+				return _currentAction;
+			}
+			set
+			{
+				Set(() => CurrentAction, ref _currentAction, value);
+			}
+
+		}
+
+		
 		public int DownloadingProgress
 		{
 			get
@@ -273,11 +288,12 @@ namespace VideoDownloader.App.ViewModel
 			AllResults = new List<Result>();
 			foreach (var res in allProducts.ResultSets[0].Results)
 			{
+				AllResults.Add(res);
 				string toolsString = res.Tools ?? "not specified";
 				var tools = toolsString.Split('|');
 				foreach (var t in tools)
 				{
-					AllResults.Add(res);
+					
 					ResultsByTags.GetOrCreate(t).Add(res);
 				}
 			}
@@ -332,6 +348,7 @@ namespace VideoDownloader.App.ViewModel
 			downloadingProgress.ProgressChanged += (s, e) =>
 			{
 				DownloadingProgress = e.ClipProgress;
+				CurrentAction = e.CurrentAction;
 				DownloadingCourse = e.ClipName;
 			};
 
@@ -342,9 +359,16 @@ namespace VideoDownloader.App.ViewModel
 			};
 
 			var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
-			foreach (var course in coursesToDownload)
+			try
 			{
-				await CourseService.DownloadAsync(course.ProdId, downloadingProgress, timeoutProgress, _cts.Token);
+				foreach (var course in coursesToDownload)
+				{
+					await CourseService.DownloadAsync(course.ProdId, downloadingProgress, timeoutProgress, _cts.Token);
+				}
+			}
+			catch (Exception e)
+			{
+				throw;
 			}
 			IsDownloading = false;
 		}

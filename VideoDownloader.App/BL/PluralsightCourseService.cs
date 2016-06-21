@@ -79,7 +79,7 @@ namespace VideoDownloader.App.BL
 		{
 			var destinationFolder = _configProvider.DownloadsPath;
 			
-			var productUri = $"{"https://app.pluralsight.com/learner/courses"}/{productId}";
+			var productUri = $"{"https://app.pluralsight.com/learner/content/courses"}/{productId}";
 			var chunkSize = 4096;
 
 			// get json of all the parts of the course
@@ -125,7 +125,18 @@ namespace VideoDownloader.App.BL
 							};
 
 							++clipCounter;
-							var fileName = $@"{destinationFolder}\{moduleDirectory}\{clipCounter:00}.{GetValidPath(clip.Title)}.mp4";
+							var justFileName = $@"{destinationFolder}\{moduleDirectory}\{clipCounter:00}.{GetValidPath(clip.Title)}";
+							var fileName = $"{justFileName}.part";
+							if (File.Exists($"{justFileName}.mp4"))
+							{
+								continue;
+							}
+
+							if (File.Exists($"{justFileName}.part"))
+							{
+								File.Delete($"{justFileName}.part");
+							}
+
 							var progressValue = (int) (((double) clipCounter)/partsNumber*100);
 							var postJson = CreateFilePostJson(clip, "1280x720");
 							var urlString = "https://app.pluralsight.com/player/retrieve-url";
@@ -144,34 +155,15 @@ namespace VideoDownloader.App.BL
 											ContentType.AppJsonUtf8, "app.pluralsight.com");
 							}
 							var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(clipResponse.Content);
-							var clipFileResponse =
-								await
-									CreateRequest(HttpMethod.Head, new Uri(clipFile.Urls[1].Url), null, AcceptHeader.HtmlXml,
-										ContentType.AppXWwwFormUrlencode, "vid20.pluralsight.com");
-
-							if (File.Exists(fileName))
-							{
-								if (new FileInfo(fileName).Length != clipFileResponse.ContentLength)
-								{
-									File.Delete(fileName);
-								}
-								else
-								{
-									var progressArgs = new CourseDownloadingProgressArguments
-									{
-										CourseName = course.Title,
-										ClipName = fileName,
-										CourseProgress = progressValue,
-										ClipProgress = 100
-									};
-
-									downloadingProgress.Report(progressArgs);
-									continue;
-								}
-							}
-
+							Uri fileUri = new Uri(clipFile.Urls[0].Url);
+							//var clipFileResponse =
+							//	await
+							//		CreateRequest(HttpMethod.Head, fileUri, null, AcceptHeader.HtmlXml,
+							//			ContentType.AppXWwwFormUrlencode, fileUri.Host);
+							
 							var initialProgressArgs = new CourseDownloadingProgressArguments
 							{
+								CurrentAction = "Downloading",
 								CourseName = course.Title,
 								ClipName = fileName,
 								CourseProgress = progressValue,
@@ -181,7 +173,7 @@ namespace VideoDownloader.App.BL
 							downloadingProgress.Report(initialProgressArgs);
 
 							var responseBuffer = new byte[chunkSize];
-							using (var request = new HttpRequestMessage(HttpMethod.Get, clipFile.Urls[1].Url))
+							using (var request = new HttpRequestMessage(HttpMethod.Get, fileUri))
 							{
 								var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
 								using (var contentStream = await httpReponseMessage.Content.ReadAsStreamAsync())
@@ -199,10 +191,11 @@ namespace VideoDownloader.App.BL
 
 											var progressArgs = new CourseDownloadingProgressArguments
 											{
+												CurrentAction = "Downloading",
 												CourseName = course.Title,
 												ClipName = fileName,
 												CourseProgress = progressValue,
-												ClipProgress = (int) (((double) totalBytesRead)/clipFileResponse.ContentLength*100)
+												ClipProgress = httpReponseMessage.Content.Headers.ContentLength != 0 ? (int) (((double) totalBytesRead)/ httpReponseMessage.Content.Headers.ContentLength*100): -1
 											};
 
 											downloadingProgress.Report(progressArgs);
@@ -212,6 +205,7 @@ namespace VideoDownloader.App.BL
 							}
 
 							timer.Enabled = true;
+							File.Move($"{justFileName}.part", $"{justFileName}.mp4");
 							await Task.Delay(timeout*1000, token);
 							timer.Enabled = false;
 							timeoutProgress.Report(0);
@@ -246,7 +240,7 @@ namespace VideoDownloader.App.BL
 		{
 			try
 			{
-			    var productsJsonResponse = await CreateRequest(HttpMethod.Get, new Uri("https://app.pluralsight.com/library/search/api?i=1&q1=course&x1=categories&count=10000"), null, AcceptHeader.HtmlXml, ContentType.AppXWwwFormUrlencode, "app.pluralsight.com");
+			    var productsJsonResponse = await CreateRequest(HttpMethod.Get, new Uri("https://app.pluralsight.com/library/search/api?i=1&q1=course&x1=categories&count=6000"), null, AcceptHeader.HtmlXml, ContentType.AppXWwwFormUrlencode, "app.pluralsight.com");
 				CachedProductsJson = productsJsonResponse.Content;
 				//CachedProductsJson = await Task.Run<string>(() => { return File.ReadAllText("D:\\json.txt"); });
 				return !string.IsNullOrEmpty(CachedProductsJson);
@@ -362,15 +356,19 @@ namespace VideoDownloader.App.BL
 		{
 			var stringParts = clip.PlayerUrl.Split('&');
 			var dict = stringParts.ToDictionary(x => x.Split('=')[0], x => x.Split('=')[1]);
-			var o = JObject.FromObject(new {
+			string[] nameParts = dict["name"].Split('|');
+			string name = nameParts.Length < 2 ? nameParts[0] : nameParts[1];
+			var o = JObject.FromObject(new
+			{
 				author = dict["author"],
-				moduleName = dict["name"],
+				moduleName = name,
 				courseName = dict.ElementAt(0).Value,
 				clipIndex = Convert.ToInt32(dict["clip"]),
 				mediaType = "mp4",
 				quality = clipQuality,
 				includeCaptions = false,
-				locale = "en" });
+				locale = "en"
+			});
 			return o.ToString();
 		}
 

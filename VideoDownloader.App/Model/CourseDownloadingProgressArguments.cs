@@ -9,5 +9,7 @@
 		public int CourseProgress { get; set; }
 
 		public int ClipProgress { get; set; }
+
+		public string CurrentAction { get; set; }
 	}
 }

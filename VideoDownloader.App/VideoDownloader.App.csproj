@@ -123,6 +123,7 @@
     <Compile Include="Converters\HasTranscriptConverter.cs" />
     <Compile Include="Converters\IntToTimeSpanStringConverter.cs" />
     <Compile Include="Converters\IsoTimeToTimeSpanConverter.cs" />
+    <Compile Include="Converters\ProgressConverter.cs" />
     <Compile Include="Converters\TagConverter.cs" />
     <Compile Include="Converters\ValueToCountConverter.cs" />
     <Compile Include="Enums.cs" />
