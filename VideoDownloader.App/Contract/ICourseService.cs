@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using VideoDownloader.App.Model;
@@ -7,14 +8,14 @@ namespace VideoDownloader.App.Contract
 {
 	public interface ICourseService
 	{
-		Task<LoginResult> LoginAsync(string userName, string password);
 
-		Task<bool> GetProductsJsonAsync();
+		Task<bool> DownloadProductsJsonAsync();
 
 		string CachedProductsJson { get; set; }
 
-		string LoginResultJson { get; set; }
+	    string Cookies { get; set; }
 
-		Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
+	    Dictionary<string, Tool> Tools { get; set; }
+	    Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
 	}
 }
