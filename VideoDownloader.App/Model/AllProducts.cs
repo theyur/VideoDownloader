@@ -63,7 +63,7 @@ namespace VideoDownloader.App.Model
 	public class ResultSet
 	{
 		public string Name { get; set; }
-		public Result[] Results { get; set; }
+		public CourseDescription[] Results { get; set; }
 	}
 	public class AllProducts
 	{

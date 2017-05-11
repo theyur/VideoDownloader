@@ -21,7 +21,7 @@ AncestorType={x:Type Window}}, Path=DataContext.CourseTagSelectedCommand}" Comma
 			<StackPanel Orientation="Horizontal">
 				<TextBlock Text="{Binding Path=Key, Converter={StaticResource TagConverter}}"/>
 				<TextBlock FontWeight="Bold" Text=" (" />
-				<TextBlock FontWeight="Bold" Text="{Binding Path=Value, Converter={StaticResource ValueToCountConverter}}"/>
+                <TextBlock FontWeight="Bold" Text="{Binding Path=Value}"/>
 				<TextBlock FontWeight="Bold" Text=")" />
 			</StackPanel>
 		</Border>

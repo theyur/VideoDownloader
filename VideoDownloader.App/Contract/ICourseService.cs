@@ -15,7 +15,10 @@ namespace VideoDownloader.App.Contract
 
 	    string Cookies { get; set; }
 
-	    Dictionary<string, Tool> Tools { get; set; }
+	    Dictionary<string, List<CourseDescription>> CoursesByToolName { get; set; }
+
 	    Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
+
+	    Task<List<CourseDescription>> GetToolCourses(string toolName);
 	}
 }

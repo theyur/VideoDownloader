@@ -2,6 +2,7 @@
 using GalaSoft.MvvmLight.CommandWpf;
 using GalaSoft.MvvmLight.Messaging;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -14,22 +15,25 @@ namespace VideoDownloader.App.ViewModel
 	{
 		#region Fields
 
-		private readonly Login _login;
-		private bool _loginButtonEnabled;
-		private bool _showAnimation;
+		//private readonly Login _login;
+        private readonly ICourseService _courseService;
+        private readonly ILoginService _loginService;
+	    private string _userName;
+
+        private bool _loginButtonEnabled;
+		private bool _loggingInAnimationVisible;
 		private bool _firstUserNameCheck = true;
 		private string _currentOperation = string.Empty;
-
-		public ICourseService CourseService { get; private set; }
+        
 		#endregion
 
 		#region Constructors
 
-		public LoginViewModel(ICourseService сourseService)
+		public LoginViewModel(ILoginService loginService, ICourseService сourseService)
 		{
-			CourseService = сourseService;
-			_login = new Login();
-			LoginButtonEnabled = false;
+			_courseService = сourseService;
+		    _loginService = loginService;
+			LoginButtonEnabled = true;
 			LoginInProgress = false;
 			LoginCommand = new RelayCommand<object>(obj => OnLogin(obj));
 			CloseCommand = new RelayCommand<ICloseable>(CloseWindow);
@@ -52,29 +56,18 @@ namespace VideoDownloader.App.ViewModel
 		{
 			get
 			{
-                return _login.UserName;
+                return "toporova.darya@inbox.ru";//return _login.UserName;
 			}
 
 			set
 			{
-				_login.UserName = value;
-				LoginButtonEnabled = ValidateUserName() && !LoginInProgress;
+                Set(() => UserName, ref _userName, value);
+                LoginButtonEnabled = ValidateUserName() && !LoginInProgress;
 			}
 		}
 
-		public string Password
-		{
-			get
-			{
-				return _login.Password;
-			}
-
-			set
-			{
-				_login.Password = value;
-			}
-		}
-
+	    public string Password { get; set; }
+	    
 		public string CurrentOperation
 		{
 			get { return _currentOperation; }
@@ -95,10 +88,10 @@ namespace VideoDownloader.App.ViewModel
 
 		public bool ShowAnimation
 		{
-			get { return _showAnimation; }
+			get { return _loggingInAnimationVisible; }
 			set
 			{
-				Set(() => ShowAnimation, ref _showAnimation, value);
+				Set(() => ShowAnimation, ref _loggingInAnimationVisible, value);
 			}
 		}
 
@@ -116,17 +109,18 @@ namespace VideoDownloader.App.ViewModel
 		private async Task OnLogin(object passwordControl)
 		{
 			LoginButtonEnabled = false;
-			LoginInProgress = true;
-			System.Windows.Controls.PasswordBox pwBoxControl = passwordControl as System.Windows.Controls.PasswordBox;
-			Debug.Assert(pwBoxControl != null);
-			var password = pwBoxControl.Password;
-			CurrentOperation = "Trying to login, wait please...";
-			LoginResult loginResult = await CourseService.LoginAsync(UserName, password);
+            Password = GetPassword(passwordControl);
+		    CurrentOperation = "Trying to login, wait please...";
+            LoginInProgress = true;
+
+            LoginResult loginResult = await _loginService.LoginAsync(UserName, Password);
 
 			if (loginResult.Status == LoginStatus.LoggedIn)
 			{
 				CurrentOperation = "Gathering products...";
-				bool received = await CourseService.GetProductsJsonAsync();
+			    _courseService.Cookies = loginResult.Cookies;
+
+                bool received = await _courseService.DownloadProductsJsonAsync();
 				if (received)
 				{
 					Messenger.Default.Send(new NotificationMessage("CloseWindow"));
@@ -145,8 +139,16 @@ namespace VideoDownloader.App.ViewModel
 				LoginButtonEnabled = true;
 			}
 		}
-		 
-		private void CloseWindow(ICloseable window)
+
+	    private static string GetPassword(object passwordControl)
+	    {
+	        System.Windows.Controls.PasswordBox pwBoxControl = passwordControl as System.Windows.Controls.PasswordBox;
+	        Debug.Assert(pwBoxControl != null);
+	        var password = "1q1q1q1q"; //pwBoxControl.Password;
+	        return password;
+	    }
+
+	    private void CloseWindow(ICloseable window)
 		{
 			window?.Close();
 		}
@@ -196,27 +198,13 @@ namespace VideoDownloader.App.ViewModel
 							}
 							break;
 						}
-
-					//case "Password":
-					//	{
-					//		if (!_firstUserNameCheck && !ValidatePassword())
-					//			msg = "Name can't be empty.";
-					//		else
-					//		{
-					//			_firstUserNameCheck = false;
-					//		}
-					//		break;
-					//	}
 				}
 				return msg;
 			}
 		}
 
-		public string Error
-		{
-			get { return String.Empty; }
-		}
+		public string Error => String.Empty;
 
-		#endregion
+	    #endregion
 	}
 }

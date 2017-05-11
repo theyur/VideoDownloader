@@ -10,6 +10,9 @@ namespace VideoDownloader.App.Model
     {
         public int CourseNumber { get; set; }
         public string Name { get; set; }
+
+        public string DashedName { get; set; }
+        
         public string Url { get; set; }
 
     }

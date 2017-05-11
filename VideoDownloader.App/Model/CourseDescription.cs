@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace VideoDownloader.App.Model
 {
-    class Course
-    {
+	public class CourseDescription
+	{
         [JsonProperty("authors")]
         public Author[] Authors { get; set; }
 
@@ -18,8 +15,8 @@ namespace VideoDownloader.App.Model
         [JsonProperty("description")]
         public string Description { get; set; }
 
-        [JsonProperty("courseName")]
-        public string CourseName { get; set; }
+	    [JsonProperty("courseName")]
+	    public string CourseName { get; set; }
 
         [JsonProperty("duration")]
         public string Duration { get; set; }
@@ -33,7 +30,7 @@ namespace VideoDownloader.App.Model
         [JsonProperty("tools")]
         public string Tools { get; set; }
 
-        public Module[] Modules { get; set; }
+		public Module[] Modules { get; set; }
 
         [JsonProperty("url")]
         public string Url { get; set; }
@@ -68,9 +65,9 @@ namespace VideoDownloader.App.Model
         [JsonProperty("keywords")]
         public string Keywords { get; set; }
 
-        [JsonProperty("categories")]
-        public string Categories { get; set; }
+	    [JsonProperty("categories")]
+	    public string Categories { get; set; }
 
         public bool CheckedForDownloading { get; set; }
-    }
+	}
 }

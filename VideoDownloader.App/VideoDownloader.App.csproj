@@ -113,10 +113,13 @@
     </ApplicationDefinition>
     <Compile Include="AutofacServiceLocator.cs" />
     <Compile Include="BL\FileConfigProfider.cs" />
+    <Compile Include="BL\HttpHelper.cs" />
     <Compile Include="BL\PluralsightCourseService.cs" />
+    <Compile Include="BL\PluralsightLoginService.cs" />
     <Compile Include="Contract\ICloseable.cs" />
     <Compile Include="Contract\IConfigProvider.cs" />
     <Compile Include="Contract\ICourseService.cs" />
+    <Compile Include="Contract\ILoginService.cs" />
     <Compile Include="Converters\AuthorArrayConverter.cs" />
     <Compile Include="Converters\BoolToVisibleConverter.cs" />
     <Compile Include="Converters\BoolToVisibleReversedConverter.cs" />
@@ -137,11 +140,13 @@
     <Compile Include="Model\AuthenticatedUser.cs" />
     <Compile Include="Model\Clip.cs" />
     <Compile Include="Model\ClipFile.cs" />
+    <Compile Include="Model\Course.cs" />
     <Compile Include="Model\CourseDownloadingProgressArguments.cs" />
     <Compile Include="Model\Login.cs" />
-    <Compile Include="Model\Course.cs" />
+    <Compile Include="Model\CourseDescription.cs" />
     <Compile Include="Model\Module.cs" />
     <Compile Include="Model\ResponseEx.cs" />
+    <Compile Include="Model\Tool.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
