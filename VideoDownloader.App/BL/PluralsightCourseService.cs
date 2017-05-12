@@ -67,163 +67,190 @@ namespace VideoDownloader.App.BL
 
             var rpcUri = "https://app.pluralsight.com/player/functions/rpc";
             var chunkSize = 4096;
-            Dictionary<string, string> rpcDictionary = new Dictionary<string, string>();
+
+            RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
+
+            var course = rpcData.Payload.Course;
+
+            DownloadCourse(course, downloadingProgress, timeoutProgress, token);
+        }
+
+        private void DownloadCourse(CourseRpc course, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token)
+        {
+            string destinationFolder = "D:";
+            var partsNumber = course.Modules.Sum(module => module.Clips.Count());
+
+            using (var httpClient = new HttpClient())
+            {
+                System.Timers.Timer timer = null;
+
+                var courseDirectory = CreateCourseDirectory(destinationFolder, course.Title);
+                try
+                {
+                    var moduleCounter = 0;
+                    foreach (var module in course.Modules)
+                    {
+                        ++moduleCounter;
+                        var moduleDirectory = CreateModuleDirectory(courseDirectory, moduleCounter, module.Title);
+
+                        var clipCounter = 0;
+                        foreach (var clip in module.Clips)
+                        {
+                            token.ThrowIfCancellationRequested();
+
+                            var timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
+                            timer = new System.Timers.Timer(1000);
+                            timer.Elapsed += (sender, e) =>
+                            {
+                                if (timeout > 0)
+                                {
+                                    timeoutProgress.Report(--timeout);
+                                }
+                            };
+
+                            ++clipCounter;
+                            var fileNameWithoutExtension = $@"{moduleDirectory}\{clipCounter:00}.{GetValidPath(clip.Title)}";
+                            var fileName = $"{fileNameWithoutExtension}.part";
+                            if (File.Exists($"{fileNameWithoutExtension}.mp4"))
+                            {
+                                continue;
+                            }
+
+                            if (File.Exists($"{fileNameWithoutExtension}.part"))
+                            {
+                                File.Delete($"{fileNameWithoutExtension}.part");
+                            }
+
+                            				var progressValue = (int) (((double) clipCounter)/partsNumber*100);
+                            				var postJson = CreateFilePostJson(clip, "1280x720");
+                            //				var urlString = "https://app.pluralsight.com/player/retrieve-url";
+                            //				var clipResponse =
+                            //					await
+                            //						SendRequest(HttpMethod.Post, new Uri(urlString), postJson, AcceptHeader.JsonTextPlain,
+                            //							ContentType.AppJsonUtf8);
+                            //				dynamic obj = JObject.Parse(clipResponse.Content);
+                            //				if (obj.status == HttpStatusCode.BadRequest || obj.status == HttpStatusCode.NotFound)
+                            //				{
+                            //					postJson = CreateFilePostJson(clip, "1024x768");
+                            //					urlString = "https://app.pluralsight.com/player/retrieve-url";
+                            //					clipResponse =
+                            //						await
+                            //							SendRequest(HttpMethod.Post, new Uri(urlString), postJson, AcceptHeader.JsonTextPlain,
+                            //								ContentType.AppJsonUtf8);
+                            //				}
+                            //				var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(clipResponse.Content);
+                            //				Uri fileUri = new Uri(clipFile.Urls[0].Url);
+                            //				//var clipFileResponse =
+                            //				//	await
+                            //				//		CreateRequest(HttpMethod.Head, fileUri, null, AcceptHeader.HtmlXml,
+                            //				//			ContentType.AppXWwwFormUrlencode, fileUri.Host);
+
+                            //				var initialProgressArgs = new CourseDownloadingProgressArguments
+                            //				{
+                            //					CurrentAction = "Downloading",
+                            //					CourseName = course.Title,
+                            //					ClipName = fileName,
+                            //					CourseProgress = progressValue,
+                            //					ClipProgress = 100
+                            //				};
+
+                            //				downloadingProgress.Report(initialProgressArgs);
+
+                            //				var responseBuffer = new byte[chunkSize];
+                            //				using (var request = new HttpRequestMessage(HttpMethod.Get, fileUri))
+                            //				{
+                            //					var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
+                            //					using (var contentStream = await httpReponseMessage.Content.ReadAsStreamAsync())
+                            //					{
+                            //						using (
+                            //							Stream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, chunkSize, true))
+                            //						{
+                            //							int bytesRead;
+                            //							int totalBytesRead = 0;
+                            //							do
+                            //							{
+                            //								bytesRead = await contentStream.ReadAsync(responseBuffer, 0, responseBuffer.Length, token);
+                            //								totalBytesRead += bytesRead;
+                            //								stream.Write(responseBuffer, 0, bytesRead);
+
+                            //								var progressArgs = new CourseDownloadingProgressArguments
+                            //								{
+                            //									CurrentAction = "Downloading",
+                            //									CourseName = course.Title,
+                            //									ClipName = fileName,
+                            //									CourseProgress = progressValue,
+                            //									ClipProgress = httpReponseMessage.Content.Headers.ContentLength != 0 ? (int) (((double) totalBytesRead)/ httpReponseMessage.Content.Headers.ContentLength*100): -1
+                            //								};
+
+                            //								downloadingProgress.Report(progressArgs);
+                            //							} while (bytesRead > 0);
+                            //						}
+                            //					}
+                            //				}
+
+                            //				timer.Enabled = true;
+                            //				File.Move($"{fileNameWithoutExtension}.part", $"{fileNameWithoutExtension}.mp4");
+                            //				await Task.Delay(timeout*1000, token);
+                            //				timer.Enabled = false;
+                            //				timeoutProgress.Report(0);
+                        }
+                    }
+                }
+                catch (OperationCanceledException /*ex*/)
+                {
+
+                }
+                finally
+                {
+                    var progressArgs = new CourseDownloadingProgressArguments
+                    {
+                        CourseName = course.Title,
+                        ClipName = string.Empty,
+                        CourseProgress = 0,
+                        ClipProgress = 0
+                    };
+
+                    downloadingProgress.Report(progressArgs);
+                    if (timer != null)
+                    {
+                        timer.Enabled = false;
+                    }
+                    timeoutProgress.Report(0);
+                }
+            }
+        }
+
+        private string CreateModuleDirectory(string courseDirectory, int moduleCounter, string moduleTitle)
+        {
+            var moduleDirectory = $@"{courseDirectory}\{moduleCounter:00}.{GetValidPath(moduleTitle)}";
+            Directory.CreateDirectory(moduleDirectory);
+            return moduleDirectory;
+        }
+
+        private string CreateCourseDirectory(string destinationFolder, string courseTitle)
+        {
+            var courseDirectory = $@"{destinationFolder}\{GetValidPath(courseTitle)}";
+            Directory.CreateDirectory(courseDirectory);
+            return courseDirectory;
+
+        }
+
+        private string BuildViewclipData()
+        {
+            ViewclipData viewclipData = new ViewclipData();
+            return viewclipData.ToString();
+        }
+
+        private async Task<RpcData> GetDeserialisedRpcData(string rpcUri, string productId)
+        {
             string rpcJson = $"{{\"fn\":\"bootstrapPlayer\", \"payload\":{{\"courseId\":\"{productId}\"}} }}";
-            // get json of all the parts of the course
+
             var courseRespone = await HttpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson,
-                AcceptHeader.JsonTextPlain, ContentType.AppJsonUtf8,  new Uri("https://www.pluralsight.com"),
+                AcceptHeader.JsonTextPlain, ContentType.AppJsonUtf8, new Uri("https://www.pluralsight.com"),
                 Cookies);
-            //							ContentType.AppJsonUtf8HttpMethod.Get, new Uri(productUri), null, AcceptHeader.HtmlXml, ContentType.AppXWwwFormUrlencode);
+
             var courseJson = courseRespone.Content;
-            var course = Newtonsoft.Json.JsonConvert.DeserializeObject<Course>(courseJson);
-
-            //// count number of the parts 
-            //var partsNumber = course.Modules.Sum(module => module.Clips.Count());
-
-            //using (var httpClient = new HttpClient())
-            //{
-            //	// creating course directory
-            //	var courseDirectory = GetValidPath(course.Title);
-            //	Directory.CreateDirectory($@"{destinationFolder}\{courseDirectory}");
-
-            //	var moduleCounter = 0;
-            //	System.Timers.Timer timer = null;
-
-            //	try
-            //	{
-            //		foreach (var module in course.Modules)
-            //		{
-            //			++moduleCounter;
-
-            //			// creating module directory
-            //			var moduleDirectory = $@"{courseDirectory}\{moduleCounter:00}.{GetValidPath(module.Title)}";
-            //			Directory.CreateDirectory($@"{destinationFolder}\{moduleDirectory}");
-
-            //			var clipCounter = 0;
-            //			foreach (var clip in module.Clips)
-            //			{
-            //				token.ThrowIfCancellationRequested();
-
-            //				var timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
-            //				timer = new System.Timers.Timer(1000);
-            //				timer.Elapsed += (sender, e) =>
-            //				{
-            //					if (timeout > 0)
-            //					{
-            //						timeoutProgress.Report(--timeout);
-            //					}
-            //				};
-
-            //				++clipCounter;
-            //				var justFileName = $@"{destinationFolder}\{moduleDirectory}\{clipCounter:00}.{GetValidPath(clip.Title)}";
-            //				var fileName = $"{justFileName}.part";
-            //				if (File.Exists($"{justFileName}.mp4"))
-            //				{
-            //					continue;
-            //				}
-
-            //				if (File.Exists($"{justFileName}.part"))
-            //				{
-            //					File.Delete($"{justFileName}.part");
-            //				}
-
-            //				var progressValue = (int) (((double) clipCounter)/partsNumber*100);
-            //				var postJson = CreateFilePostJson(clip, "1280x720");
-            //				var urlString = "https://app.pluralsight.com/player/retrieve-url";
-            //				var clipResponse =
-            //					await
-            //						SendRequest(HttpMethod.Post, new Uri(urlString), postJson, AcceptHeader.JsonTextPlain,
-            //							ContentType.AppJsonUtf8);
-            //				dynamic obj = JObject.Parse(clipResponse.Content);
-            //				if (obj.status == HttpStatusCode.BadRequest || obj.status == HttpStatusCode.NotFound)
-            //				{
-            //					postJson = CreateFilePostJson(clip, "1024x768");
-            //					urlString = "https://app.pluralsight.com/player/retrieve-url";
-            //					clipResponse =
-            //						await
-            //							SendRequest(HttpMethod.Post, new Uri(urlString), postJson, AcceptHeader.JsonTextPlain,
-            //								ContentType.AppJsonUtf8);
-            //				}
-            //				var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(clipResponse.Content);
-            //				Uri fileUri = new Uri(clipFile.Urls[0].Url);
-            //				//var clipFileResponse =
-            //				//	await
-            //				//		CreateRequest(HttpMethod.Head, fileUri, null, AcceptHeader.HtmlXml,
-            //				//			ContentType.AppXWwwFormUrlencode, fileUri.Host);
-
-            //				var initialProgressArgs = new CourseDownloadingProgressArguments
-            //				{
-            //					CurrentAction = "Downloading",
-            //					CourseName = course.Title,
-            //					ClipName = fileName,
-            //					CourseProgress = progressValue,
-            //					ClipProgress = 100
-            //				};
-
-            //				downloadingProgress.Report(initialProgressArgs);
-
-            //				var responseBuffer = new byte[chunkSize];
-            //				using (var request = new HttpRequestMessage(HttpMethod.Get, fileUri))
-            //				{
-            //					var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
-            //					using (var contentStream = await httpReponseMessage.Content.ReadAsStreamAsync())
-            //					{
-            //						using (
-            //							Stream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, chunkSize, true))
-            //						{
-            //							int bytesRead;
-            //							int totalBytesRead = 0;
-            //							do
-            //							{
-            //								bytesRead = await contentStream.ReadAsync(responseBuffer, 0, responseBuffer.Length, token);
-            //								totalBytesRead += bytesRead;
-            //								stream.Write(responseBuffer, 0, bytesRead);
-
-            //								var progressArgs = new CourseDownloadingProgressArguments
-            //								{
-            //									CurrentAction = "Downloading",
-            //									CourseName = course.Title,
-            //									ClipName = fileName,
-            //									CourseProgress = progressValue,
-            //									ClipProgress = httpReponseMessage.Content.Headers.ContentLength != 0 ? (int) (((double) totalBytesRead)/ httpReponseMessage.Content.Headers.ContentLength*100): -1
-            //								};
-
-            //								downloadingProgress.Report(progressArgs);
-            //							} while (bytesRead > 0);
-            //						}
-            //					}
-            //				}
-
-            //				timer.Enabled = true;
-            //				File.Move($"{justFileName}.part", $"{justFileName}.mp4");
-            //				await Task.Delay(timeout*1000, token);
-            //				timer.Enabled = false;
-            //				timeoutProgress.Report(0);
-            //			}
-            //		}
-            //	}
-            //	catch (OperationCanceledException /*ex*/)
-            //	{
-
-            //	}
-            //	finally
-            //	{
-            //		var progressArgs = new CourseDownloadingProgressArguments
-            //		{
-            //			CourseName = course.Title,
-            //			ClipName = string.Empty,
-            //			CourseProgress = 0,
-            //			ClipProgress = 0
-            //		};
-
-            //		downloadingProgress.Report(progressArgs);
-            //		if (timer != null)
-            //		{
-            //			timer.Enabled = false;
-            //		}
-            //		timeoutProgress.Report(0);
-            //	}
-            //}
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseJson);
         }
 
         public async Task<bool> DownloadProductsJsonAsync()
@@ -257,7 +284,7 @@ namespace VideoDownloader.App.BL
             {
                 try
                 {
-                    var tools = product.Tools?.Split('|') ?? new[] {"No category"};
+                    var tools = product.Tools?.Split('|') ?? new[] { "No category" };
                     foreach (var tool in tools)
                     {
                         if (!CoursesByToolName.ContainsKey(tool))
@@ -302,7 +329,7 @@ namespace VideoDownloader.App.BL
         }
         string CreateFilePostJson(Clip clip, string clipQuality)
         {
-            var stringParts = clip.PlayerUrl.Split('&');
+            var stringParts = clip.ModuleTitle.Split('&');
             var dict = stringParts.ToDictionary(x => x.Split('=')[0], x => x.Split('=')[1]);
             string[] nameParts = dict["name"].Split('|');
             string name = nameParts.Length < 2 ? nameParts[0] : nameParts[1];
@@ -319,7 +346,5 @@ namespace VideoDownloader.App.BL
             });
             return o.ToString();
         }
-
-
     }
 }
