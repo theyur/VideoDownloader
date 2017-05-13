@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using VideoDownloader.App.Contract;
 using VideoDownloader.App.Model;
 using Timer = System.Timers.Timer;
@@ -22,18 +23,23 @@ namespace VideoDownloader.App.BL
     {
         #region Fields
 
-        private readonly Timer _timer = new System.Timers.Timer(1000);
         private readonly IConfigProvider _configProvider;
         private readonly object _syncObj = new object();
         private readonly string _userAgent;
         private CancellationToken _token;
-        private IProgress<CourseDownloadingProgressArguments> _downloadingProgress;
+        private IProgress<CourseDownloadingProgressArguments> _clipDownloadingProgress;
+        private Progress<FileDownloadingProgressArguments> _downloadingProgress;
         const int ChunkSize = 4096;
+        private int _totalCourseDownloadingProgess = 0;
+        private int _timeout;
+        private readonly Timer _timer = new System.Timers.Timer(1000);
+        private IProgress<int> _timeoutProgress;
 
         #endregion
 
-        #region Constructors
-        public PluralsightCourseService(IConfigProvider configProvider)
+    #region Constructors
+
+    public PluralsightCourseService(IConfigProvider configProvider)
         {
             _configProvider = configProvider;
             _userAgent = _configProvider.UserAgent;
@@ -71,21 +77,24 @@ namespace VideoDownloader.App.BL
             IProgress<int> timeoutProgress,
             CancellationToken token)
         {
+            _timeoutProgress = timeoutProgress;
+            _clipDownloadingProgress = downloadingProgress;
             var destinationFolder = _configProvider.DownloadsPath;
             _token = token;
             var rpcUri = "https://app.pluralsight.com/player/functions/rpc";
 
             RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
 
-            await DownloadCourse(rpcData, downloadingProgress, timeoutProgress);
+            await DownloadCourse(rpcData);
         }
 
-        private async Task DownloadCourse(RpcData rpcData, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress)
+        private async Task DownloadCourse(RpcData rpcData)
         {
             string destinationFolder = _configProvider.DownloadsPath;
-            _downloadingProgress = downloadingProgress;
+            
             var course = rpcData.Payload.Course;
-
+            _timer.Elapsed += OnTimerElapsed;
+          
             var courseDirectory = CreateCourseDirectory(destinationFolder, course.Title);
             try
             {
@@ -93,7 +102,7 @@ namespace VideoDownloader.App.BL
                 foreach (var module in course.Modules)
                 {
                     ++moduleCounter;
-                    await DownloadModule(rpcData, timeoutProgress, courseDirectory, moduleCounter, module);
+                    await DownloadModule(rpcData, courseDirectory, moduleCounter, module);
                 }
             }
             catch (OperationCanceledException /*ex*/)
@@ -110,17 +119,25 @@ namespace VideoDownloader.App.BL
                     ClipProgress = 0
                 };
 
-                downloadingProgress.Report(progressArgs);
+                _clipDownloadingProgress.Report(progressArgs);
                 if (_timer != null)
                 {
                     _timer.Enabled = false;
                 }
-                timeoutProgress.Report(0);
+                _timeoutProgress.Report(0);
+            }
+        }
+
+        private void OnTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            if (_timeout > 0)
+            {
+                _timeoutProgress.Report(--_timeout);
             }
         }
 
         private async Task DownloadModule(RpcData rpcData,
-            IProgress<int> timeoutProgress, string courseDirectory,
+            string courseDirectory,
             int moduleCounter, Module module)
         {
             var moduleDirectory = CreateModuleDirectory(courseDirectory, moduleCounter, module.Title);
@@ -154,12 +171,11 @@ namespace VideoDownloader.App.BL
                 await DownloadClip(new Uri(clipFile.Urls[1].Url),
                     fileName,
                     clipCounter,
-                    rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length),
-                    timeoutProgress);
+                    rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
             }
         }
 
-        private async Task DownloadClip(Uri clipUrl, string fileNameWithoutExtension, int clipCounter, int partsNumber, IProgress<int> timeoutProgress)
+        private async Task DownloadClip(Uri clipUrl, string fileNameWithoutExtension, int clipCounter, int partsNumber)
         {
             _token.ThrowIfCancellationRequested();
 
@@ -168,7 +184,7 @@ namespace VideoDownloader.App.BL
             RemovePartiallyDownloadedFile(fileNameWithoutExtension);
 
             var fileName = $"{fileNameWithoutExtension}.part";
-            var progressValue = (int)(((double)clipCounter) / partsNumber * 100);
+            _totalCourseDownloadingProgess = (int)(((double)clipCounter) / partsNumber * 100);
 
             var httpHelper = new HttpHelper
             {
@@ -188,50 +204,39 @@ namespace VideoDownloader.App.BL
                 CurrentAction = "Downloading",
                 //CourseName = course.Title,
                 ClipName = fileName,
-                CourseProgress = progressValue,
+                CourseProgress = _totalCourseDownloadingProgess,
                 ClipProgress = 100
             };
 
-            _downloadingProgress.Report(initialProgressArgs);
+            _downloadingProgress = new Progress<FileDownloadingProgressArguments>();
+            _downloadingProgress.ProgressChanged += OnProgressChanged;
 
-            var responseBuffer = new byte[ChunkSize];
-            using (var request = new HttpRequestMessage(HttpMethod.Get, fileUri))
-            {
-                var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _token);
-                using (var contentStream = await httpReponseMessage.Content.ReadAsStreamAsync())
-                {
-                    using (
-                        Stream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, ChunkSize, true))
-                    {
-                        int bytesRead;
-                        int totalBytesRead = 0;
-                        do
-                        {
-                            bytesRead = await contentStream.ReadAsync(responseBuffer, 0, responseBuffer.Length, _token);
-                            totalBytesRead += bytesRead;
-                            stream.Write(responseBuffer, 0, bytesRead);
+            await httpHelper.DownloadWithProgressAsync(clipUrl, $"{fileNameWithoutExtension}.mp4", _downloadingProgress, _token);
 
-                            var progressArgs = new CourseDownloadingProgressArguments
-                            {
-                                CurrentAction = "Downloading",
-                                CourseName = course.Title,
-                                ClipName = fileName,
-                                CourseProgress = progressValue,
-                                ClipProgress = httpReponseMessage.Content.Headers.ContentLength != 0 ? (int)(((double)totalBytesRead) / httpReponseMessage.Content.Headers.ContentLength * 100) : -1
-                            };
+            _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
 
-                            downloadingProgress.Report(progressArgs);
-                        } while (bytesRead > 0);
-                    }
-                }
-            }
+            _timer.Enabled = true;
+            await Task.Delay(_timeout * 1000, _token);
+            _timer.Enabled = false;
+            _timeoutProgress.Report(0);
+            _downloadingProgress.ProgressChanged -= OnProgressChanged;
+            
 
-            //timer.Enabled = true;
-            File.Move($"{fileNameWithoutExtension}.part", $"{fileNameWithoutExtension}.mp4");
-            //await Task.Delay(timeout * 1000, token);
-            //timer.Enabled = false;
-            timeoutProgress.Report(0);
         }
+
+        private void OnProgressChanged(object sender, FileDownloadingProgressArguments e)
+        {
+            var progressArgs = new CourseDownloadingProgressArguments
+            {
+                CurrentAction = "Downloading",
+                //CourseName = course.Title,
+                ClipName = e.FileName,
+                CourseProgress = _totalCourseDownloadingProgess,
+                ClipProgress = e.Percentage
+            };
+            _clipDownloadingProgress.Report(progressArgs);
+        }
+
 
         private static void RemovePartiallyDownloadedFile(string fileNameWithoutExtension)
         {
@@ -258,7 +263,6 @@ namespace VideoDownloader.App.BL
             var courseDirectory = $@"{destinationFolder}\{GetValidPath(courseTitle)}";
             Directory.CreateDirectory(courseDirectory);
             return courseDirectory;
-
         }
 
         private string BuildViewclipData(RpcData rpcData, int moduleCounter, int clipCounter)
@@ -280,13 +284,17 @@ namespace VideoDownloader.App.BL
         private async Task<RpcData> GetDeserialisedRpcData(string rpcUri, string productId)
         {
             string rpcJson = $"{{\"fn\":\"bootstrapPlayer\", \"payload\":{{\"courseId\":\"{productId}\"}} }}";
+            var httpHelper = new HttpHelper
+            {
+                AcceptHeader = AcceptHeader.JsonTextPlain,
+                AcceptEncoding = "",
+                ContentType = ContentType.AppJsonUtf8,
+                Cookies = Cookies,
+                Referrer = new Uri("https://www.pluralsight.com")
+            };
+            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, _token);
 
-            var courseRespone = await HttpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson,
-                AcceptHeader.JsonTextPlain, ContentType.AppJsonUtf8, new Uri("https://www.pluralsight.com"),
-                Cookies);
-
-            var courseJson = courseRespone.Content;
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseJson);
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
         }
 
         public async Task<bool> DownloadProductsJsonAsync()
@@ -302,8 +310,7 @@ namespace VideoDownloader.App.BL
                     Referrer = new Uri("https://www.pluralsight.com")
                 };
                 var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
-                    new Uri(
-                        "https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7010"),
+                    new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7010"),
                     null, _token);
 
                 CachedProductsJson = productsJsonResponse.Content;
@@ -349,7 +356,7 @@ namespace VideoDownloader.App.BL
             {
                 if (File.Exists(fileName))
                 {
-                    CachedProductsJson = await Task.Run<string>(() => { return File.ReadAllText("D:\\json.txt"); });
+                    CachedProductsJson = await Task.Run(() => File.ReadAllText("D:\\json.txt"), _token);
                 }
                 else
                 {
@@ -366,27 +373,8 @@ namespace VideoDownloader.App.BL
 
         public async Task<List<CourseDescription>> GetToolCourses(string toolName)
         {
-            List<CourseDescription> courses = await Task.Run(() => CoursesByToolName.Single(kvp => kvp.Key == toolName).Value);
+            var courses = await Task.Run(() => CoursesByToolName.Single(kvp => kvp.Key == toolName).Value, _token);
             return courses;
-        }
-        string CreateFilePostJson(Clip clip, string clipQuality)
-        {
-            var stringParts = clip.ModuleTitle.Split('&');
-            var dict = stringParts.ToDictionary(x => x.Split('=')[0], x => x.Split('=')[1]);
-            string[] nameParts = dict["name"].Split('|');
-            string name = nameParts.Length < 2 ? nameParts[0] : nameParts[1];
-            var o = JObject.FromObject(new
-            {
-                author = dict["author"],
-                moduleName = name,
-                courseName = dict.ElementAt(0).Value,
-                clipIndex = Convert.ToInt32(dict["clip"]),
-                mediaType = "mp4",
-                quality = clipQuality,
-                includeCaptions = false,
-                locale = "en"
-            });
-            return o.ToString();
         }
     }
 }

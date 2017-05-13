@@ -141,6 +141,7 @@
     <Compile Include="Model\Clip.cs" />
     <Compile Include="Model\ClipFile.cs" />
     <Compile Include="Model\CourseRpc.cs" />
+    <Compile Include="Model\FileDownloadingProgressArguments.cs" />
     <Compile Include="Model\RpcData.cs" />
     <Compile Include="Model\CourseDownloadingProgressArguments.cs" />
     <Compile Include="Model\Login.cs" />

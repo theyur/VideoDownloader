@@ -24,6 +24,39 @@ namespace VideoDownloader.App.BL
 
         public ContentType ContentType { get; set; }
 
+        public async Task DownloadWithProgressAsync(Uri fileUri, string fileName, IProgress<FileDownloadingProgressArguments> downloadingProgress, CancellationToken token)
+        {
+            var responseBuffer = new byte[4096];
+            var fullFileNameWithoutExtension = $@"{Path.GetDirectoryName(fileName)}\{Path.GetFileNameWithoutExtension(fileName)}";
+            var extension = Path.GetExtension(fileName);
+            var httpClient = GetHttpClient(fileUri, "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0");
+            using (var request = new HttpRequestMessage(HttpMethod.Get, fileUri))
+            {
+                var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
+                using (var contentStream = await httpReponseMessage.Content.ReadAsStreamAsync())
+                using (
+                    Stream stream = new FileStream($"{fullFileNameWithoutExtension}.part", FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
+                {
+                    int bytesRead;
+                    int totalBytesRead = 0;
+                    do
+                    {
+                        bytesRead = await contentStream.ReadAsync(responseBuffer, 0, responseBuffer.Length, token);
+                        totalBytesRead += bytesRead;
+                        await stream.WriteAsync(responseBuffer, 0, bytesRead, token);
+
+                        downloadingProgress?.Report(new FileDownloadingProgressArguments
+                        {
+                            Percentage = httpReponseMessage.Content.Headers.ContentLength != 0 ? 
+                            (int)(((double) totalBytesRead) / httpReponseMessage.Content.Headers.ContentLength * 100)
+                                : -1,
+                            FileName = $"{fullFileNameWithoutExtension}.{extension}"
+                        });
+                    } while (bytesRead > 0);
+                }
+            }
+            File.Move($"{fullFileNameWithoutExtension}.part", $"{fullFileNameWithoutExtension}{extension}");
+        }
         public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, CancellationToken cancellationToken)
         {
             try
