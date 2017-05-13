@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VideoDownloader.App.Model;
 
@@ -13,48 +14,59 @@ namespace VideoDownloader.App.BL
 {
     public class HttpHelper
     {
-        public static async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, AcceptHeader acceptHeader, ContentType contentType, Uri referrer, string cookies)
+        public string Cookies { get; set; }
+
+        public Uri Referrer { get; set; }
+
+        public string AcceptEncoding { get; set; }
+
+        public AcceptHeader AcceptHeader { get; set; }
+
+        public ContentType ContentType { get; set; }
+
+        public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, CancellationToken cancellationToken)
         {
             try
             {
                 var responseEx = new ResponseEx { Content = string.Empty, ContentLength = 0 };
-                var requestMessage = GetHttpRequestMessage(method, postData, acceptHeader, contentType, referrer, cookies);
+                var requestMessage = GetHttpRequestMessage(method, postData);
 
                 var client = GetHttpClient(url, "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0");
 
                 if (client != null)
                 {
-                    var response = await client.SendAsync(requestMessage);
-                    var responseStream = await response.Content.ReadAsStreamAsync();
-                    responseEx.ResponseMessage = response;
-                    IEnumerable<string> values;
-                    var contentLength = 0;
-
-                    // Save cookies
-
-                    if (response.Content.Headers.TryGetValues("Content-Length", out values))
+                    using (var response = await client.SendAsync(requestMessage, cancellationToken))
+                    using (var responseStream = await response.Content.ReadAsStreamAsync())
                     {
-                        contentLength = Convert.ToInt32(values.ElementAt(0));
-                    }
+                        responseEx.ResponseMessage = response;
+                        IEnumerable<string> values;
+                        var contentLength = 0;
 
-                    if (response.StatusCode == HttpStatusCode.Redirect)
-                    {
-                        if (response.Headers.TryGetValues("Set-Cookie", out values))
+                        // Save cookies
+
+                        if (response.Content.Headers.TryGetValues("Content-Length", out values))
                         {
-                            responseEx.Cookies = string.Join(";", values);
+                            contentLength = Convert.ToInt32(values.ElementAt(0));
                         }
-                        if (response.Headers.TryGetValues("Location", out values))
-                        {
-                            responseEx.RedirectUrl = values.First();
-                        }
-                    }
-                    else
-                    {
-                        var reader = new StreamReader(responseStream, Encoding.UTF8);
-                        responseEx.Content = reader.ReadToEnd();
-                        responseEx.ContentLength = contentLength;
-                    }
 
+                        if (response.StatusCode == HttpStatusCode.Redirect)
+                        {
+                            if (response.Headers.TryGetValues("Set-Cookie", out values))
+                            {
+                                responseEx.Cookies = string.Join(";", values);
+                            }
+                            if (response.Headers.TryGetValues("Location", out values))
+                            {
+                                responseEx.RedirectUrl = values.First();
+                            }
+                        }
+                        else
+                        {
+                            var reader = new StreamReader(responseStream, Encoding.UTF8);
+                            responseEx.Content = reader.ReadToEnd();
+                            responseEx.ContentLength = contentLength;
+                        }
+                    }
                     return responseEx;
                 }
 
@@ -66,26 +78,28 @@ namespace VideoDownloader.App.BL
             }
         }
 
-        private static HttpRequestMessage GetHttpRequestMessage(HttpMethod method, string postData, AcceptHeader acceptHeader,
-            ContentType contentType, Uri referrer, string cookies)
+        private HttpRequestMessage GetHttpRequestMessage(HttpMethod method, string postData)
         {
             HttpRequestMessage requestMessage = new HttpRequestMessage { Method = method };
 
             // uncomment if you want to recieve gzipped response
-            //requestMessage.Headers.AcceptEncoding.TryParseAdd("gzip,deflate");
-            requestMessage.Headers.Accept.TryParseAdd(GetEnumDescription(acceptHeader));
-            requestMessage.Headers.Host = "app.pluralsight.com";
-            requestMessage.Headers.Referrer = referrer;
-
-            if (!string.IsNullOrEmpty(cookies))
+            if (AcceptEncoding != string.Empty)
             {
-                requestMessage.Headers.Add("Cookie", cookies);
+                requestMessage.Headers.AcceptEncoding.TryParseAdd(AcceptEncoding);
+            }
+            requestMessage.Headers.Accept.TryParseAdd(GetEnumDescription(AcceptHeader));
+            requestMessage.Headers.Host = "app.pluralsight.com";
+            requestMessage.Headers.Referrer = Referrer;
+
+            if (!string.IsNullOrEmpty(Cookies))
+            {
+                requestMessage.Headers.Add("Cookie", Cookies);
             }
 
             if (method == HttpMethod.Post)
             {
                 requestMessage.Content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(postData)));
-                requestMessage.Content.Headers.Add("Content-Type", GetEnumDescription(contentType));
+                requestMessage.Content.Headers.Add("Content-Type", GetEnumDescription(ContentType));
             }
             return requestMessage;
         }

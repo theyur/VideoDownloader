@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using VideoDownloader.App.Contract;
 using VideoDownloader.App.Model;
@@ -22,21 +23,24 @@ namespace VideoDownloader.App.BL
             ResponseEx loginResponse = null;
             HttpMethod httpMethod = HttpMethod.Post;
             Uri urlToGo = new Uri("https://app.pluralsight.com/id/");
+            var httpHelper = new HttpHelper
+            {
+                AcceptHeader = AcceptHeader.HtmlXml,
+                AcceptEncoding = "",
+                ContentType = ContentType.AppXWwwFormUrlencode,
+                Cookies = _cookies,
+                Referrer = new Uri("https://app.pluralsight.com/id/")
+            };
             do
             {
-                loginResponse = await HttpHelper.SendRequest(httpMethod,
-                    urlToGo,
-                    postData, AcceptHeader.HtmlXml,
-                    ContentType.AppXWwwFormUrlencode,
-                    new Uri("https://app.pluralsight.com/id/"),
-                    _cookies);
+                loginResponse = await httpHelper.SendRequest(httpMethod, urlToGo, postData, new CancellationToken());
                 _cookies += $"{loginResponse.Cookies};";
                 if (loginResponse.RedirectUrl != null)
                 {
                     urlToGo = new Uri(loginResponse.RedirectUrl);
                 }
                 httpMethod = HttpMethod.Get;
-                ;
+                httpHelper.Cookies = _cookies;
             } while (loginResponse.ResponseMessage.StatusCode == HttpStatusCode.Redirect);
             string userData;
             if (IsLoggedIn(loginResponse.Content, out userData))

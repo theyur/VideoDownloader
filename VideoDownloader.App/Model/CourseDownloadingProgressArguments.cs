@@ -2,7 +2,7 @@
 {
 	public class CourseDownloadingProgressArguments
 	{
-		public string CourseName { get; set; }
+		//public string CourseName { get; set; }
 
 		public string ClipName { get; set; }
 

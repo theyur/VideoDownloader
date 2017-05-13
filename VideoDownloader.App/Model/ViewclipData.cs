@@ -13,7 +13,7 @@ namespace VideoDownloader.App.Model
         [JsonProperty("author")]
         public string Author { get; set; }
 
-        [JsonProperty("clipindex")]
+        [JsonProperty("clipIndex")]
         public int ClipIndex { get; set; }
 
         [JsonProperty("courseName")]

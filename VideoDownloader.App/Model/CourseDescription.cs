@@ -10,7 +10,7 @@ namespace VideoDownloader.App.Model
         public Author[] Authors { get; set; }
 
         [JsonProperty("imageVersion")]
-        public int ImageeVersion { get; set; }
+        public int ImageVersion { get; set; }
 
         [JsonProperty("description")]
         public string Description { get; set; }
@@ -30,7 +30,8 @@ namespace VideoDownloader.App.Model
         [JsonProperty("tools")]
         public string Tools { get; set; }
 
-		public Module[] Modules { get; set; }
+        [JsonProperty("modules")]
+        public Module[] Modules { get; set; }
 
         [JsonProperty("url")]
         public string Url { get; set; }
