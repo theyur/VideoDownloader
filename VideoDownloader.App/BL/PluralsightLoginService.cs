@@ -22,9 +22,16 @@ namespace VideoDownloader.App.BL
         public async Task<LoginResult> LoginAsync(string userName, string password)
         {
             var postData = BuildPostDataString(userName, password);
-            var loginResult = new LoginResult() { DataJson = string.Empty, Status = LoginStatus.Failed };
+            
+           
+            var loginResponse = await TryLoginAsync(postData);
+            var loginResult = GetLoginResult(loginResponse);
+            LoginResultJson = loginResult.DataJson;
+            return loginResult;
+        }
 
-            ResponseEx loginResponse;
+        private async Task<ResponseEx> TryLoginAsync(string postData)
+        {
             HttpMethod httpMethod = HttpMethod.Post;
             Uri urlToGo = new Uri("https://app.pluralsight.com/id/");
             var httpHelper = new HttpHelper
@@ -33,9 +40,11 @@ namespace VideoDownloader.App.BL
                 AcceptEncoding = "",
                 ContentType = ContentType.AppXWwwFormUrlencode,
                 Cookies = _cookies,
-                Referrer = new Uri("https://app.pluralsight.com/id/"),
+                Referrer = urlToGo,
                 UserAgent = _configProvider.UserAgent
             };
+
+            ResponseEx loginResponse;
             do
             {
                 loginResponse = await httpHelper.SendRequest(httpMethod, urlToGo, postData, new CancellationToken());
@@ -47,12 +56,17 @@ namespace VideoDownloader.App.BL
                 httpMethod = HttpMethod.Get;
                 httpHelper.Cookies = _cookies;
             } while (loginResponse.ResponseMessage.StatusCode == HttpStatusCode.Redirect);
+            return loginResponse;
+        }
+
+        private LoginResult GetLoginResult(ResponseEx loginResponse)
+        {
+            LoginResult loginResult = new LoginResult();
             string userData;
             if (IsLoggedIn(loginResponse.Content, out userData))
             {
                 loginResult.Status = LoginStatus.LoggedIn;
                 loginResult.DataJson = userData;
-                LoginResultJson = loginResult.DataJson;
                 loginResult.Cookies = _cookies;
             }
             else

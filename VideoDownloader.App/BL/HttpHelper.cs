@@ -77,8 +77,6 @@ namespace VideoDownloader.App.BL
                         IEnumerable<string> values;
                         var contentLength = 0;
 
-                        // Save cookies
-
                         if (response.Content.Headers.TryGetValues("Content-Length", out values))
                         {
                             contentLength = Convert.ToInt32(values.ElementAt(0));

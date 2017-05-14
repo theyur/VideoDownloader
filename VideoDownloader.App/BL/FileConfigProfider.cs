@@ -11,19 +11,18 @@ namespace VideoDownloader.App.BL
 	{
 		#region Fields
 
-		string _path => "videodownloader.settings";
+		private string _path => "videodownloader.settings";
+	    private readonly List<string> _userAgents;
 
-		#endregion
+        #endregion
 
-		#region Properties
+        #region Properties
 
-		public int MinTimeout { get; set; } = 60;
+        public int MinTimeout { get; set; } = 60;
 
 		public int MaxTimeout { get; set; } = 120;
 
 		public string UserAgent { get; }
-
-		public List<string> UserAgents { get; }
 
 		public string DownloadsPath { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
@@ -38,11 +37,11 @@ namespace VideoDownloader.App.BL
 				MinTimeout = Convert.ToInt32(values["mintimeout"]);
 				MaxTimeout = Convert.ToInt32(values["maxtimeout"]);
 
-				UserAgents = JsonConvert.DeserializeObject<List<string>>(Convert.ToString(values["userAgents"]));
+                _userAgents = JsonConvert.DeserializeObject<List<string>>(Convert.ToString(values["userAgents"]));
 			}
 			else
 			{
-				UserAgents = new List<string>
+                _userAgents = new List<string>
 				{
 					"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0",
 					"Mozilla/5.0 (iPhone; CPU iPhone OS 9_0 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13A342 Safari/601.1",
@@ -55,8 +54,7 @@ namespace VideoDownloader.App.BL
 
 			if (UserAgent == null)
 			{
-				var rnd = new Random(Guid.NewGuid().GetHashCode());
-				UserAgent = UserAgents.ElementAt(rnd.Next(0, UserAgents.Count - 1));
+			    UserAgent = GetRandomUserAgent();
 			}
 		}
 
@@ -64,7 +62,14 @@ namespace VideoDownloader.App.BL
 		{
 			try
 			{
-				var settings = JsonConvert.SerializeObject(new { mintimeout = MinTimeout, maxtimeout = MaxTimeout, downloadspath = DownloadsPath, userAgents = UserAgents },Formatting.Indented);
+				var settings = JsonConvert.SerializeObject(new
+				{
+				    mintimeout = MinTimeout,
+                    maxtimeout = MaxTimeout,
+                    downloadspath = DownloadsPath,
+                    userAgents = _userAgents
+				},Formatting.Indented);
+
 				using (TextWriter tw = new StreamWriter(_path))
 				{
 					tw.Write(settings);
@@ -76,10 +81,10 @@ namespace VideoDownloader.App.BL
 			}
 		}
 
-		public string GetRandomUserAgent()
+	    private string GetRandomUserAgent()
 		{
 			var rnd = new Random(Guid.NewGuid().GetHashCode());
-			return UserAgents.ElementAt(rnd.Next(0, UserAgents.Count - 1));
+			return _userAgents.ElementAt(rnd.Next(0, _userAgents.Count - 1));
 		}
 	}
 }
