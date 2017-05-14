@@ -24,6 +24,8 @@ namespace VideoDownloader.App.BL
 
         public ContentType ContentType { get; set; }
 
+        public string UserAgent { get; set; }
+
         public async Task DownloadWithProgressAsync(Uri fileUri, string fileName, IProgress<FileDownloadingProgressArguments> downloadingProgress, CancellationToken token)
         {
             var responseBuffer = new byte[4096];
@@ -50,7 +52,7 @@ namespace VideoDownloader.App.BL
                             Percentage = httpReponseMessage.Content.Headers.ContentLength != 0 ? 
                             (int)(((double) totalBytesRead) / httpReponseMessage.Content.Headers.ContentLength * 100)
                                 : -1,
-                            FileName = $"{fullFileNameWithoutExtension}.{extension}"
+                            FileName = $"{fullFileNameWithoutExtension}{extension}"
                         });
                     } while (bytesRead > 0);
                 }
@@ -139,15 +141,11 @@ namespace VideoDownloader.App.BL
 
         private static string GetEnumDescription(Enum value)
         {
-            var fi = value.GetType().GetField(value.ToString());
+            var field = value.GetType().GetField(value.ToString());
 
-            var attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
+            var attributes = (DescriptionAttribute[])field.GetCustomAttributes(typeof(DescriptionAttribute), false);
 
-            if (attributes.Any())
-            {
-                return attributes[0].Description;
-            }
-            return value.ToString();
+            return attributes.Any() ? attributes[0].Description : value.ToString();
         }
 
         private static HttpClient GetHttpClient(Uri url, string userAgent)

@@ -59,7 +59,6 @@
 				  ItemTemplate="{StaticResource TagListViewItemDataTemplate}"
 				  ItemsSource="{Binding ResultsByToolsFilteredList}"
 				  Style="{StaticResource TagListViewControlStyle}">
-
 			</ListView>
 
 			<TextBox Tag="Search product"

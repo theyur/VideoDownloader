@@ -20,12 +20,13 @@
 				<!--<ResourceDictionary Source="ResourceDictionaries\Templates\TagListViewItemControlTemplate.xaml" />-->
 				<ResourceDictionary Source="ResourceDictionaries\Templates\TagListViewItemDataTemplate.xaml" />
 				<ResourceDictionary Source="ResourceDictionaries\Templates\ProductsListViewItemDataTemplate.xaml" />
-				
-				<ResourceDictionary Source="ResourceDictionaries\NamedStyles\ProductsListViewControlStyle.xaml" />
+
+                <ResourceDictionary Source="ResourceDictionaries\NamedStyles\TagListViewItemContrainerStyle.xaml" />
+                <ResourceDictionary Source="ResourceDictionaries\NamedStyles\TagListViewControlStyle.xaml" />
+                <ResourceDictionary Source="ResourceDictionaries\NamedStyles\ProductsListViewControlStyle.xaml" />
 				<ResourceDictionary Source="ResourceDictionaries\NamedStyles\TextBoxWithDefaultTextStyle.xaml" />
 				<ResourceDictionary Source="ResourceDictionaries\NamedStyles\PasswordBoxStyle.xaml" />
-				<ResourceDictionary Source="ResourceDictionaries\NamedStyles\TagListViewItemContrainerStyle.xaml" />
-				<ResourceDictionary Source="ResourceDictionaries\NamedStyles\TagListViewControlStyle.xaml" />
+				
 				
 				<ResourceDictionary Source="ResourceDictionaries\Images\Common.xaml" />
 				

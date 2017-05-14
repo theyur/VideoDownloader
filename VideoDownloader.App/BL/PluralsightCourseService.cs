@@ -1,14 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Security.Policy;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,7 +73,7 @@ namespace VideoDownloader.App.BL
         {
             _timeoutProgress = timeoutProgress;
             _clipDownloadingProgress = downloadingProgress;
-            var destinationFolder = _configProvider.DownloadsPath;
+            
             _token = token;
             var rpcUri = "https://app.pluralsight.com/player/functions/rpc";
 
@@ -202,12 +196,11 @@ namespace VideoDownloader.App.BL
             var initialProgressArgs = new CourseDownloadingProgressArguments
             {
                 CurrentAction = "Downloading",
-                //CourseName = course.Title,
                 ClipName = fileName,
                 CourseProgress = _totalCourseDownloadingProgess,
                 ClipProgress = 100
             };
-
+            _clipDownloadingProgress.Report(initialProgressArgs);
             _downloadingProgress = new Progress<FileDownloadingProgressArguments>();
             _downloadingProgress.ProgressChanged += OnProgressChanged;
 
@@ -269,7 +262,6 @@ namespace VideoDownloader.App.BL
         {
             ViewclipData viewclipData = new ViewclipData();
             Module module = rpcData.Payload.Course.Modules[moduleCounter - 1];
-            Clip clip = module.Clips[clipCounter - 1];
             viewclipData.Author = module.Author;
             viewclipData.IncludeCaptions = rpcData.Payload.Course.CourseHasCaptions;
             viewclipData.ClipIndex = clipCounter - 1;
@@ -310,7 +302,7 @@ namespace VideoDownloader.App.BL
                     Referrer = new Uri("https://www.pluralsight.com")
                 };
                 var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
-                    new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7010"),
+                    new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=20"),
                     null, _token);
 
                 CachedProductsJson = productsJsonResponse.Content;
