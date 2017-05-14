@@ -5,14 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
-using System.Windows.Controls;
 using VideoDownloader.App.Contract;
-using VideoDownloader.App.Extension;
 using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.ViewModel
@@ -40,6 +35,8 @@ namespace VideoDownloader.App.ViewModel
         private IEnumerable<CourseDescription> _currentDisplayedCourses;
         private ObservableCollection<CourseDescription> _currentDisplayedFilteredCourses;
         private readonly IConfigProvider _configProvider;
+        private readonly ICourseService _courseService;
+
         private bool _isDownloading;
         private bool _anyCourseSelected;
         private string _downloadingCourse;
@@ -246,7 +243,6 @@ namespace VideoDownloader.App.ViewModel
             }
         }
 
-        public ICourseService CourseService { get; }
 
         #endregion
 
@@ -275,7 +271,7 @@ namespace VideoDownloader.App.ViewModel
         {
             _configProvider = configProvider;
             CurrentUserAgent = _configProvider.UserAgent;
-            CourseService = courseService;
+            _courseService = courseService;
             NumberOfSelectedCourses = 0;
             AuthenticatedUser authenticatedUser = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatedUser>(loginService.LoginResultJson);
             Title = $"{authenticatedUser.CurrentUser.FirstName} {authenticatedUser.CurrentUser.LastName} ({authenticatedUser.CurrentUser.Email})";
@@ -286,7 +282,8 @@ namespace VideoDownloader.App.ViewModel
             OpenSettingsWindowCommand = new RelayCommand(OnOpenSettingsWindow);
             ProductCheckBoxToggledCommand = new RelayCommand<bool>(OnProductCheckBoxToggledCommand);
             DownloadCourseCommand = new RelayCommand(OnDownloadCourseAsync, CanExecuteDownload);
-            ResultsByTags = CourseService.CoursesByToolName.ToDictionary(kvp => kvp.Key, v => v.Value.Count);
+            ResultsByTags = _courseService.CoursesByToolName.ToDictionary(kvp => kvp.Key, v => v.Value.Count);
+            AllResults = _courseService.CoursesByToolName.Values.SelectMany(x => x).Distinct().ToList();
             ResultsByToolsFilteredList =
                 new ObservableCollection<KeyValuePair<string, int>>(
                     ResultsByTags.Where(tool => tool.Key.ToLower().Contains(TagsFilterText.ToLower()))
@@ -353,14 +350,14 @@ namespace VideoDownloader.App.ViewModel
             var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
             foreach (var course in coursesToDownload)
             {
-                await CourseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cts.Token);
+                await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cts.Token);
             }
             IsDownloading = false;
         }
 
         private async void OnCourseTagSelected(string toolName)
         {
-            CurrentDisplayedCourses = await CourseService.GetToolCourses(toolName);
+            CurrentDisplayedCourses = await _courseService.GetToolCourses(toolName);
             if (CurrentDisplayedCourses.Any())
             {
                 CurrentDisplayedFilteredCourses =

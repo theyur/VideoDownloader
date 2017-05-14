@@ -4,26 +4,22 @@
 					 xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
                     xmlns:GalaSoft_MvvmLight_Command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
 					xmlns:converters="clr-namespace:VideoDownloader.App.Converters">
-	<converters:TagConverter x:Key="TagConverter"/>
-	<converters:ValueToCountConverter x:Key="ValueToCountConverter"/>
-	<DataTemplate x:Key="TagListViewItemDataTemplate">
-		<!--internal border-->
-		<Border x:Name="Border"
-                Margin="0"
-                Padding="5,2,2,2" BorderThickness="2" BorderBrush="Orange" Background="AntiqueWhite" CornerRadius="2" Cursor="Hand">
-			<i:Interaction.Triggers>
-				<i:EventTrigger EventName="MouseLeftButtonUp">
-					<!--Since we need the datacontext of PluralsightMainWindow we write it explicitly, otherwise we would get the datacontext of the listview itsself-->
-					<GalaSoft_MvvmLight_Command:EventToCommand Command="{Binding RelativeSource={RelativeSource FindAncestor, 
+    <converters:TagConverter x:Key="TagConverter"/>
+    <converters:ValueToCountConverter x:Key="ValueToCountConverter"/>
+    <DataTemplate x:Key="TagListViewItemDataTemplate">
+        <StackPanel Orientation="Horizontal">
+            <i:Interaction.Triggers>
+                <i:EventTrigger EventName="MouseLeftButtonUp">
+                    <!--Since we need the datacontext of PluralsightMainWindow we write it explicitly, otherwise we would get the datacontext of the listview itsself-->
+                    <GalaSoft_MvvmLight_Command:EventToCommand Command="{Binding RelativeSource={RelativeSource FindAncestor, 
 AncestorType={x:Type Window}}, Path=DataContext.CourseTagSelectedCommand}" CommandParameter="{Binding Key}" />
-				</i:EventTrigger>
-			</i:Interaction.Triggers>
-			<StackPanel Orientation="Horizontal">
-				<TextBlock Text="{Binding Path=Key, Converter={StaticResource TagConverter}}"/>
-				<TextBlock FontWeight="Bold" Text=" (" />
-                <TextBlock FontWeight="Bold" Text="{Binding Path=Value}"/>
-				<TextBlock FontWeight="Bold" Text=")" />
-			</StackPanel>
-		</Border>
-	</DataTemplate>
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
+            <TextBlock Text="{Binding Path=Key, Converter={StaticResource TagConverter}}"/>
+            <TextBlock FontWeight="Bold" Text=" (" />
+            <TextBlock FontWeight="Bold" Text="{Binding Path=Value}"/>
+            <TextBlock FontWeight="Bold" Text=")" />
+        </StackPanel>
+
+    </DataTemplate>
 </ResourceDictionary>

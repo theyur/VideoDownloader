@@ -12,15 +12,19 @@ namespace VideoDownloader.App.BL
     public class PluralsightLoginService:ILoginService
     {
         private string _cookies;
-
+        private readonly IConfigProvider _configProvider;
         public string LoginResultJson { get; set; }
 
+        public PluralsightLoginService(IConfigProvider configProvider)
+        {
+            _configProvider = configProvider;
+        }
         public async Task<LoginResult> LoginAsync(string userName, string password)
         {
             var postData = BuildPostDataString(userName, password);
             var loginResult = new LoginResult() { DataJson = string.Empty, Status = LoginStatus.Failed };
 
-            ResponseEx loginResponse = null;
+            ResponseEx loginResponse;
             HttpMethod httpMethod = HttpMethod.Post;
             Uri urlToGo = new Uri("https://app.pluralsight.com/id/");
             var httpHelper = new HttpHelper
@@ -29,7 +33,8 @@ namespace VideoDownloader.App.BL
                 AcceptEncoding = "",
                 ContentType = ContentType.AppXWwwFormUrlencode,
                 Cookies = _cookies,
-                Referrer = new Uri("https://app.pluralsight.com/id/")
+                Referrer = new Uri("https://app.pluralsight.com/id/"),
+                UserAgent = _configProvider.UserAgent
             };
             do
             {

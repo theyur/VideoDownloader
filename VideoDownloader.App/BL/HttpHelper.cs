@@ -31,7 +31,7 @@ namespace VideoDownloader.App.BL
             var responseBuffer = new byte[4096];
             var fullFileNameWithoutExtension = $@"{Path.GetDirectoryName(fileName)}\{Path.GetFileNameWithoutExtension(fileName)}";
             var extension = Path.GetExtension(fileName);
-            var httpClient = GetHttpClient(fileUri, "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0");
+            var httpClient = GetHttpClient(fileUri, UserAgent);
             using (var request = new HttpRequestMessage(HttpMethod.Get, fileUri))
             {
                 var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
@@ -66,7 +66,7 @@ namespace VideoDownloader.App.BL
                 var responseEx = new ResponseEx { Content = string.Empty, ContentLength = 0 };
                 var requestMessage = GetHttpRequestMessage(method, postData);
 
-                var client = GetHttpClient(url, "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0");
+                var client = GetHttpClient(url, UserAgent);
 
                 if (client != null)
                 {

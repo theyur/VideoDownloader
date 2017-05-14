@@ -23,23 +23,14 @@ namespace VideoDownloader.App.Converters
 			{
 				return Visibility.Visible;
 			}
-			else
-			{
-				if (Collapse)
-					return Visibility.Collapsed;
-				else
-					return Visibility.Hidden;
-			}
+		    return Collapse ? Visibility.Collapsed : Visibility.Hidden;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
 			Visibility visibility = (Visibility)value;
 
-			if (visibility == Visibility.Visible)
-				return true;
-			else
-				return false;
+			return visibility == Visibility.Visible;
 		}
 		#endregion
 	}

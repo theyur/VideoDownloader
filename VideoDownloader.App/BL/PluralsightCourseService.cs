@@ -17,23 +17,24 @@ namespace VideoDownloader.App.BL
     {
         #region Fields
 
-        private readonly IConfigProvider _configProvider;
         private readonly object _syncObj = new object();
+        private readonly Timer _timer = new Timer(1000);
+
+        private readonly IConfigProvider _configProvider;
+
         private readonly string _userAgent;
         private CancellationToken _token;
         private IProgress<CourseDownloadingProgressArguments> _clipDownloadingProgress;
         private Progress<FileDownloadingProgressArguments> _downloadingProgress;
-        const int ChunkSize = 4096;
-        private int _totalCourseDownloadingProgess = 0;
+        private int _totalCourseDownloadingProgess;
         private int _timeout;
-        private readonly Timer _timer = new System.Timers.Timer(1000);
         private IProgress<int> _timeoutProgress;
 
         #endregion
 
-    #region Constructors
+        #region Constructors
 
-    public PluralsightCourseService(IConfigProvider configProvider)
+        public PluralsightCourseService(IConfigProvider configProvider)
         {
             _configProvider = configProvider;
             _userAgent = _configProvider.UserAgent;
@@ -73,7 +74,7 @@ namespace VideoDownloader.App.BL
         {
             _timeoutProgress = timeoutProgress;
             _clipDownloadingProgress = downloadingProgress;
-            
+
             _token = token;
             var rpcUri = "https://app.pluralsight.com/player/functions/rpc";
 
@@ -85,10 +86,10 @@ namespace VideoDownloader.App.BL
         private async Task DownloadCourse(RpcData rpcData)
         {
             string destinationFolder = _configProvider.DownloadsPath;
-            
+
             var course = rpcData.Payload.Course;
             _timer.Elapsed += OnTimerElapsed;
-          
+
             var courseDirectory = CreateCourseDirectory(destinationFolder, course.Title);
             try
             {
@@ -146,7 +147,8 @@ namespace VideoDownloader.App.BL
                 AcceptHeader = AcceptHeader.All,
                 ContentType = ContentType.AppJsonUtf8,
                 Cookies = Cookies,
-                Referrer = new Uri(referrer)
+                Referrer = new Uri(referrer),
+                UserAgent = _userAgent
             };
 
             foreach (var clip in module.Clips)
@@ -155,25 +157,25 @@ namespace VideoDownloader.App.BL
                 var postJson = BuildViewclipData(rpcData, moduleCounter, clipCounter);
 
                 var fileName = GetFullFileNameWithoutExtension(clipCounter, moduleDirectory, clip);
+                if (!File.Exists($"{fileName}.mp4"))
+                {
+                    var viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
+                        new Uri("https://app.pluralsight.com/video/clips/viewclip"),
+                        postJson,
+                        _token);
 
-                var viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
-                    new Uri("https://app.pluralsight.com/video/clips/viewclip"),
-                    postJson,
-                    _token);
-
-                var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
-                await DownloadClip(new Uri(clipFile.Urls[1].Url),
-                    fileName,
-                    clipCounter,
-                    rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
+                    var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
+                    await DownloadClip(new Uri(clipFile.Urls[1].Url),
+                        fileName,
+                        clipCounter,
+                        rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
+                }
             }
         }
 
         private async Task DownloadClip(Uri clipUrl, string fileNameWithoutExtension, int clipCounter, int partsNumber)
         {
             _token.ThrowIfCancellationRequested();
-
-            if (File.Exists($"{fileNameWithoutExtension}.mp4")) return;
 
             RemovePartiallyDownloadedFile(fileNameWithoutExtension);
 
@@ -186,7 +188,8 @@ namespace VideoDownloader.App.BL
                 AcceptHeader = AcceptHeader.All,
                 ContentType = ContentType.Video,
                 Cookies = Cookies,
-                Referrer = new Uri("http://vid20.pluralsight.com")
+                Referrer = new Uri("http://vid20.pluralsight.com"),
+                UserAgent = _userAgent
             };
 
             var clipFileResponse =
@@ -213,7 +216,7 @@ namespace VideoDownloader.App.BL
             _timer.Enabled = false;
             _timeoutProgress.Report(0);
             _downloadingProgress.ProgressChanged -= OnProgressChanged;
-            
+
 
         }
 
@@ -282,7 +285,8 @@ namespace VideoDownloader.App.BL
                 AcceptEncoding = "",
                 ContentType = ContentType.AppJsonUtf8,
                 Cookies = Cookies,
-                Referrer = new Uri("https://www.pluralsight.com")
+                Referrer = new Uri("https://www.pluralsight.com"),
+                UserAgent = _userAgent
             };
             var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, _token);
 
@@ -299,10 +303,11 @@ namespace VideoDownloader.App.BL
                     AcceptHeader = AcceptHeader.HtmlXml,
                     ContentType = ContentType.AppXWwwFormUrlencode,
                     Cookies = Cookies,
-                    Referrer = new Uri("https://www.pluralsight.com")
+                    Referrer = new Uri("https://www.pluralsight.com"),
+                    UserAgent = _userAgent
                 };
                 var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
-                    new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=20"),
+                    new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7100"),
                     null, _token);
 
                 CachedProductsJson = productsJsonResponse.Content;

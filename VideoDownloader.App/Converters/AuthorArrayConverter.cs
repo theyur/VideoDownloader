@@ -13,7 +13,13 @@ namespace VideoDownloader.App.Converters
 			if (targetType != typeof(string))
 				throw new InvalidOperationException("The target must be a String");
 
-			return ((Author[]) value).Aggregate(string.Empty, (current, author) => current + $"{author.DisplayName}");
+		    string result = string.Empty;
+		    var authors = (Author[]) value;
+		    if (authors != null)
+		    {
+		        result = authors.Aggregate(result, (current, author) => current + $"{author.DisplayName}");
+		    }
+		    return result;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

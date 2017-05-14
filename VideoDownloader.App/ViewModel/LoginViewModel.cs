@@ -1,13 +1,10 @@
 ﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using GalaSoft.MvvmLight.Messaging;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using VideoDownloader.App.Contract;
-using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.ViewModel
 {
@@ -15,7 +12,6 @@ namespace VideoDownloader.App.ViewModel
 	{
 		#region Fields
 
-		//private readonly Login _login;
         private readonly ICourseService _courseService;
         private readonly ILoginService _loginService;
 	    private string _userName;
@@ -35,7 +31,7 @@ namespace VideoDownloader.App.ViewModel
 		    _loginService = loginService;
 			LoginButtonEnabled = true;
 			LoginInProgress = false;
-			LoginCommand = new RelayCommand<object>(obj => OnLogin(obj));
+			LoginCommand = new RelayCommand<object>(obj => OnLogin(obj), Login_CanExecute);
 			CloseCommand = new RelayCommand<ICloseable>(CloseWindow);
 		}
 		#endregion
@@ -56,7 +52,7 @@ namespace VideoDownloader.App.ViewModel
 		{
 			get
 			{
-                return "toporova.darya@inbox.ru";//return _login.UserName;
+                return _userName;
 			}
 
 			set
@@ -66,7 +62,7 @@ namespace VideoDownloader.App.ViewModel
 			}
 		}
 
-	    public string Password { get; set; }
+	    private string Password { get; set; }
 	    
 		public string CurrentOperation
 		{
@@ -95,8 +91,7 @@ namespace VideoDownloader.App.ViewModel
 			}
 		}
 
-		public bool LoginInProgress
-		{ get; private set; }
+	    private bool LoginInProgress { get; set; }
 
 		#endregion
 
@@ -143,8 +138,8 @@ namespace VideoDownloader.App.ViewModel
 	    private static string GetPassword(object passwordControl)
 	    {
 	        System.Windows.Controls.PasswordBox pwBoxControl = passwordControl as System.Windows.Controls.PasswordBox;
-	        Debug.Assert(pwBoxControl != null);
-	        var password = "1q1q1q1q"; //pwBoxControl.Password;
+	        Debug.Assert(pwBoxControl != null, "pwBoxControl != null");
+	        var password = pwBoxControl.Password;
 	        return password;
 	    }
 
@@ -155,29 +150,16 @@ namespace VideoDownloader.App.ViewModel
 
 		private bool Login_CanExecute(object o)
 		{
-			return LoginButtonEnabled && ValidateUserName() && ValidatePassword();
+			return LoginButtonEnabled && ValidateUserName();
 		}
 
-		void OnLogout()
-		{
-
-		}
-
-		#endregion
+	    #endregion
 
 		#region Auxiliary methods
 
-		bool ValidateUserName()
-		{
-			return !string.IsNullOrEmpty(UserName);
-		}
+	    private bool ValidateUserName() => !string.IsNullOrEmpty(UserName);
 
-		bool ValidatePassword()
-		{
-			return !string.IsNullOrEmpty(Password);
-		}
-
-		#endregion
+	    #endregion
 
 		#region IDataError members
 
@@ -203,7 +185,7 @@ namespace VideoDownloader.App.ViewModel
 			}
 		}
 
-		public string Error => String.Empty;
+		public string Error => string.Empty;
 
 	    #endregion
 	}

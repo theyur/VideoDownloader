@@ -13,7 +13,7 @@ namespace VideoDownloader.App.Converters
 				throw new InvalidOperationException("The target must be string");
 			}
 
-			return (bool)value ? "Yes" : "No";
+			return value != null && (bool)value ? "Yes" : "No";
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

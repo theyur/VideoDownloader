@@ -26,10 +26,7 @@ namespace VideoDownloader.App.Converters
 			{
 				return Visibility.Visible;
 			}
-			else
-			{
-				return Collapse ? Visibility.Collapsed : Visibility.Hidden;
-			}
+		    return Collapse ? Visibility.Collapsed : Visibility.Hidden;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

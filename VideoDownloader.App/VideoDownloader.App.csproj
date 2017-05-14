@@ -138,10 +138,14 @@
     </Compile>
     <Compile Include="Model\AllProducts.cs" />
     <Compile Include="Model\AuthenticatedUser.cs" />
+    <Compile Include="Model\Author.cs" />
     <Compile Include="Model\Clip.cs" />
     <Compile Include="Model\ClipFile.cs" />
+    <Compile Include="Model\ClipUrl.cs" />
     <Compile Include="Model\CourseRpc.cs" />
+    <Compile Include="Model\CurrentUser.cs" />
     <Compile Include="Model\FileDownloadingProgressArguments.cs" />
+    <Compile Include="Model\ResultSet.cs" />
     <Compile Include="Model\RpcData.cs" />
     <Compile Include="Model\CourseDownloadingProgressArguments.cs" />
     <Compile Include="Model\Login.cs" />
@@ -149,7 +153,9 @@
     <Compile Include="Model\Module.cs" />
     <Compile Include="Model\PayloadRpc.cs" />
     <Compile Include="Model\ResponseEx.cs" />
+    <Compile Include="Model\Subscription.cs" />
     <Compile Include="Model\Tool.cs" />
+    <Compile Include="Model\UserAvatar.cs" />
     <Compile Include="Model\ViewclipData.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
@@ -187,10 +193,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ResourceDictionaries\NamedStyles\TagListViewControlStyle.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ResourceDictionaries\NamedStyles\TagListViewItemContrainerStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

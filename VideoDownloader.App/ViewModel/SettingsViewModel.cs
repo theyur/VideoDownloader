@@ -11,8 +11,7 @@ namespace VideoDownloader.App.ViewModel
 	{
 		#region Fields
 
-		IConfigProvider _configProvider;
-		int _minTimeout;
+	    int _minTimeout;
 		int _maxTimeout;
 		string _downloadsPath;
 
@@ -60,11 +59,11 @@ namespace VideoDownloader.App.ViewModel
 
 		public SettingsViewModel(IConfigProvider configProvider)
 		{
-			_configProvider = configProvider;
+		    var configProvider1 = configProvider;
 
-			MinTimeout = _configProvider.MinTimeout;
-			MaxTimeout = _configProvider.MaxTimeout;
-			DownloadsPath = _configProvider.DownloadsPath;
+			MinTimeout = configProvider1.MinTimeout;
+			MaxTimeout = configProvider1.MaxTimeout;
+			DownloadsPath = configProvider1.DownloadsPath;
 
 			OpenSelectFolderDialogCommand = new RelayCommand(() =>
 			{
@@ -78,18 +77,19 @@ namespace VideoDownloader.App.ViewModel
 
 			SaveSettingsCommand = new RelayCommand(() =>
 			{
-				_configProvider.MinTimeout = MinTimeout;
-				_configProvider.MaxTimeout = MaxTimeout;
-				_configProvider.DownloadsPath = DownloadsPath;
+				configProvider1.MinTimeout = MinTimeout;
+				configProvider1.MaxTimeout = MaxTimeout;
+				configProvider1.DownloadsPath = DownloadsPath;
 
-				_configProvider.Save();
+				configProvider1.Save();
 				try
 				{
 					Messenger.Default.Send(new NotificationMessage("CloseSettingsWindow"));
 				}
-				catch (Exception /*exc*/)
-				{
-				}
+			    catch (Exception /*exc*/)
+			    {
+			        // ignored
+			    }
 			});
 
 			CancelCommand = new RelayCommand(() =>
