@@ -14,21 +14,22 @@ namespace VideoDownloader.App.BL
 {
     public class HttpHelper
     {
-        public string Cookies { get; set; }
+        private const int ChunkSize = 4096;
 
-        public Uri Referrer { get; set; }
+        public string Cookies { private get; set; }
 
-        public string AcceptEncoding { get; set; }
+        public Uri Referrer { private get; set; }
 
-        public AcceptHeader AcceptHeader { get; set; }
+        public string AcceptEncoding { private get; set; }
 
-        public ContentType ContentType { get; set; }
+        public AcceptHeader AcceptHeader { private get; set; }
 
-        public string UserAgent { get; set; }
+        public ContentType ContentType { private get; set; }
+
+        public string UserAgent { private get; set; }
 
         public async Task DownloadWithProgressAsync(Uri fileUri, string fileName, IProgress<FileDownloadingProgressArguments> downloadingProgress, CancellationToken token)
         {
-            var responseBuffer = new byte[4096];
             var fullFileNameWithoutExtension = $@"{Path.GetDirectoryName(fileName)}\{Path.GetFileNameWithoutExtension(fileName)}";
             var extension = Path.GetExtension(fileName);
             var httpClient = GetHttpClient(fileUri, UserAgent);
@@ -36,11 +37,12 @@ namespace VideoDownloader.App.BL
             {
                 var httpReponseMessage = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
                 using (var contentStream = await httpReponseMessage.Content.ReadAsStreamAsync())
-                using (
-                    Stream stream = new FileStream($"{fullFileNameWithoutExtension}.part", FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
+                using (Stream stream = new FileStream($"{fullFileNameWithoutExtension}.part", FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
                 {
                     int bytesRead;
                     int totalBytesRead = 0;
+                    var responseBuffer = new byte[ChunkSize];
+
                     do
                     {
                         bytesRead = await contentStream.ReadAsync(responseBuffer, 0, responseBuffer.Length, token);
@@ -49,8 +51,8 @@ namespace VideoDownloader.App.BL
 
                         downloadingProgress?.Report(new FileDownloadingProgressArguments
                         {
-                            Percentage = httpReponseMessage.Content.Headers.ContentLength != 0 ? 
-                            (int)(((double) totalBytesRead) / httpReponseMessage.Content.Headers.ContentLength * 100)
+                            Percentage = httpReponseMessage.Content.Headers.ContentLength != 0 ?
+                            (int)(((double)totalBytesRead) / httpReponseMessage.Content.Headers.ContentLength * 100)
                                 : -1,
                             FileName = $"{fullFileNameWithoutExtension}{extension}"
                         });
@@ -59,6 +61,7 @@ namespace VideoDownloader.App.BL
             }
             File.Move($"{fullFileNameWithoutExtension}.part", $"{fullFileNameWithoutExtension}{extension}");
         }
+
         public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, CancellationToken cancellationToken)
         {
             try
@@ -68,42 +71,40 @@ namespace VideoDownloader.App.BL
 
                 var client = GetHttpClient(url, UserAgent);
 
-                if (client != null)
+                if (client == null) return null;
+
+                using (var response = await client.SendAsync(requestMessage, cancellationToken))
+                using (var responseStream = await response.Content.ReadAsStreamAsync())
                 {
-                    using (var response = await client.SendAsync(requestMessage, cancellationToken))
-                    using (var responseStream = await response.Content.ReadAsStreamAsync())
+                    responseEx.ResponseMessage = response;
+                    var contentLength = 0;
+
+                    if (response.Content.Headers.TryGetValues("Content-Length", out IEnumerable<string> contentLengthValues))
                     {
-                        responseEx.ResponseMessage = response;
-                        IEnumerable<string> values;
-                        var contentLength = 0;
+                        contentLength = Convert.ToInt32(contentLengthValues.ElementAt(0));
+                    }
 
-                        if (response.Content.Headers.TryGetValues("Content-Length", out values))
+                    if (response.StatusCode == HttpStatusCode.Redirect)
+                    {
+                        if (response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> setCookieValues))
                         {
-                            contentLength = Convert.ToInt32(values.ElementAt(0));
+                            responseEx.Cookies = string.Join(";", setCookieValues);
                         }
-
-                        if (response.StatusCode == HttpStatusCode.Redirect)
+                        if (response.Headers.TryGetValues("Location", out IEnumerable<string> locationValues))
                         {
-                            if (response.Headers.TryGetValues("Set-Cookie", out values))
-                            {
-                                responseEx.Cookies = string.Join(";", values);
-                            }
-                            if (response.Headers.TryGetValues("Location", out values))
-                            {
-                                responseEx.RedirectUrl = values.First();
-                            }
+                            responseEx.RedirectUrl = locationValues.First();
                         }
-                        else
+                    }
+                    else
+                    {
+                        using (var reader = new StreamReader(responseStream, Encoding.UTF8))
                         {
-                            var reader = new StreamReader(responseStream, Encoding.UTF8);
                             responseEx.Content = reader.ReadToEnd();
                             responseEx.ContentLength = contentLength;
                         }
                     }
-                    return responseEx;
                 }
-
-                return null;
+                return responseEx;
             }
             catch (HttpRequestException /*exc*/)
             {
@@ -140,9 +141,7 @@ namespace VideoDownloader.App.BL
         private static string GetEnumDescription(Enum value)
         {
             var field = value.GetType().GetField(value.ToString());
-
             var attributes = (DescriptionAttribute[])field.GetCustomAttributes(typeof(DescriptionAttribute), false);
-
             return attributes.Any() ? attributes[0].Description : value.ToString();
         }
 

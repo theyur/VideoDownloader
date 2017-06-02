@@ -68,7 +68,7 @@ namespace VideoDownloader.App.BL
                     maxtimeout = MaxTimeout,
                     downloadspath = DownloadsPath,
                     userAgents = _userAgents
-				},Formatting.Indented);
+				}, Formatting.Indented);
 
 				using (TextWriter tw = new StreamWriter(_path))
 				{

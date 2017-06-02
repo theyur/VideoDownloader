@@ -9,7 +9,6 @@
 	<converters:ProgressConverter x:Key="ProgressConverter"/>
 	<converters:IntToTimeSpanStringConverter x:Key="IntToTimeSpanStringConverter"/>
 	<converters:IsoTimeToTimeSpanConverter x:Key="IsoTimeToTimeSpanConverter"/>
-    <converters:StringToUriConverter x:Key="StringToUriConverter"/>
                                     	
 	<DataTemplate x:Key="ProductsListViewItemDataTemplate">
 		<Border x:Name="CourseItemBorder"
