@@ -111,6 +111,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AttachedProperty\HyperlinkExtensions.cs" />
     <Compile Include="AutofacServiceLocator.cs" />
     <Compile Include="BL\FileConfigProfider.cs" />
     <Compile Include="BL\HttpHelper.cs" />

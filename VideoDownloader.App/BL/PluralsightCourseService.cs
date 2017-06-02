@@ -108,7 +108,6 @@ namespace VideoDownloader.App.BL
             {
                 var progressArgs = new CourseDownloadingProgressArguments
                 {
-                    //CourseName = course.Title,
                     ClipName = string.Empty,
                     CourseProgress = 0,
                     ClipProgress = 0
@@ -143,7 +142,7 @@ namespace VideoDownloader.App.BL
 
             HttpHelper httpHelper = new HttpHelper
             {
-                AcceptEncoding = "",
+                AcceptEncoding = string.Empty,
                 AcceptHeader = AcceptHeader.All,
                 ContentType = ContentType.AppJsonUtf8,
                 Cookies = Cookies,

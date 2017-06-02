@@ -12,26 +12,14 @@ using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.ViewModel
 {
-    /// <summary>
-    /// This class contains properties that the main View can data bind to.
-    /// <para>
-    /// Use the <strong>mvvminpc</strong> snippet to add bindable properties to this ViewModel.
-    /// </para>
-    /// <para>
-    /// You can also use Blend to data bind with the tool's support.
-    /// </para>
-    /// <para>
-    /// See http://www.galasoft.ch/mvvm
-    /// </para>
-    /// </summary>
     public class PluralsightMainViewModel : ViewModelBase
     {
         #region Fields
 
-        private CancellationTokenSource _cts;
-        private ObservableCollection<KeyValuePair<string, int>> _resultsByToolsFilteredList;
-        private Dictionary<string, int> _resultsByTags;
-        private List<CourseDescription> _allResults;
+        private CancellationTokenSource _cancellationToken;
+        
+        private Dictionary<string, int> _numberOfCoursesForTag;
+        private List<CourseDescription> _allCourses;
         private IEnumerable<CourseDescription> _currentDisplayedCourses;
         private ObservableCollection<CourseDescription> _currentDisplayedFilteredCourses;
         private readonly IConfigProvider _configProvider;
@@ -176,8 +164,7 @@ namespace VideoDownloader.App.ViewModel
             {
                 if (Set(() => TagsFilterText, ref _tagsFilterText, value))
                 {
-                    ResultsByToolsFilteredList =
-                        new ObservableCollection<KeyValuePair<string, int>>(ResultsByTags.Where(tool => tool.Key.ToLower().Contains(TagsFilterText.ToLower())).OrderBy(tool => tool.Key));
+                    RaisePropertyChanged(nameof(NumberOfCoursesForTag));
                 }
             }
         }
@@ -189,39 +176,31 @@ namespace VideoDownloader.App.ViewModel
             {
                 if (Set(() => CoursesFilterText, ref _coursesFilterText, value))
                 {
-                    if (AllResults.Any())
+                    if (AllCourses.Any())
                     {
                         CurrentDisplayedFilteredCourses =
-                            new ObservableCollection<CourseDescription>(AllResults.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
+                            new ObservableCollection<CourseDescription>(AllCourses.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
                     }
                 }
             }
         }
 
-        public ObservableCollection<KeyValuePair<string, int>> ResultsByToolsFilteredList
+        public List<CourseDescription> AllCourses
         {
-            get { return _resultsByToolsFilteredList; }
+            get { return _allCourses; }
             set
             {
-                Set(() => ResultsByToolsFilteredList, ref _resultsByToolsFilteredList, value);
+                Set(() => AllCourses, ref _allCourses, value);
             }
         }
 
-        public List<CourseDescription> AllResults
+        public Dictionary<string, int> NumberOfCoursesForTag
         {
-            get { return _allResults; }
+            get { return _numberOfCoursesForTag.Where(tool => tool.Key.ToLower().Contains(TagsFilterText.ToLower()))
+                        .OrderBy(tool => tool.Key).ToDictionary(p => p.Key, p=>p.Value); }
             set
             {
-                Set(() => AllResults, ref _allResults, value);
-            }
-        }
-
-        public Dictionary<string, int> ResultsByTags
-        {
-            get { return _resultsByTags; }
-            set
-            {
-                Set(() => ResultsByTags, ref _resultsByTags, value);
+                Set(() => NumberOfCoursesForTag, ref _numberOfCoursesForTag, value);
             }
         }
 
@@ -248,7 +227,7 @@ namespace VideoDownloader.App.ViewModel
 
         #region Command
 
-        public RelayCommand<string> CourseTagSelectedCommand { get; }
+        public RelayCommand<string> CourseTagSelectedCommand { get; set; }
 
         public RelayCommand OpenDownloadsFolderCommand { get; }
 
@@ -282,12 +261,9 @@ namespace VideoDownloader.App.ViewModel
             OpenSettingsWindowCommand = new RelayCommand(OnOpenSettingsWindow);
             ProductCheckBoxToggledCommand = new RelayCommand<bool>(OnProductCheckBoxToggledCommand);
             DownloadCourseCommand = new RelayCommand(OnDownloadCourseAsync, CanExecuteDownload);
-            ResultsByTags = _courseService.CoursesByToolName.ToDictionary(kvp => kvp.Key, v => v.Value.Count);
-            AllResults = _courseService.CoursesByToolName.Values.SelectMany(x => x).Distinct().ToList();
-            ResultsByToolsFilteredList =
-                new ObservableCollection<KeyValuePair<string, int>>(
-                    ResultsByTags.Where(tool => tool.Key.ToLower().Contains(TagsFilterText.ToLower()))
-                        .OrderBy(tool => tool.Key));
+            NumberOfCoursesForTag = _courseService.CoursesByToolName.ToDictionary(kvp => kvp.Key, v => v.Value.Count);
+            AllCourses = _courseService.CoursesByToolName.Values.SelectMany(x => x).Distinct().ToList();
+            
         }
 
         #endregion
@@ -331,7 +307,7 @@ namespace VideoDownloader.App.ViewModel
         private async void OnDownloadCourseAsync()
         {
             IsDownloading = true;
-            _cts = new CancellationTokenSource();
+            _cancellationToken = new CancellationTokenSource();
 
             var downloadingProgress = new Progress<CourseDownloadingProgressArguments>();
             downloadingProgress.ProgressChanged += (s, e) =>
@@ -350,7 +326,7 @@ namespace VideoDownloader.App.ViewModel
             var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
             foreach (var course in coursesToDownload)
             {
-                await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cts.Token);
+                await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
             }
             IsDownloading = false;
         }
@@ -369,7 +345,7 @@ namespace VideoDownloader.App.ViewModel
 
         void OnCancelDownloads()
         {
-            _cts?.Cancel();
+            _cancellationToken?.Cancel();
             IsDownloading = false;
         }
 

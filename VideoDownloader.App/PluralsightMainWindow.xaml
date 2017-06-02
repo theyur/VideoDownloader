@@ -57,7 +57,7 @@
 				  Margin="10,15,10,0"
 				  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
 				  ItemTemplate="{StaticResource TagListViewItemDataTemplate}"
-				  ItemsSource="{Binding ResultsByToolsFilteredList}"
+				  ItemsSource="{Binding NumberOfCoursesForTag}"
 				  Style="{StaticResource TagListViewControlStyle}">
 			</ListView>
 
