@@ -15,6 +15,11 @@ namespace VideoDownloader.App.BL
 {
     class PluralsightCourseService : ICourseService
     {
+        #region Constants
+        
+        const string FileName = "products.json";
+
+        #endregion
         #region Fields
 
         private readonly object _syncObj = new object();
@@ -191,9 +196,7 @@ namespace VideoDownloader.App.BL
                 UserAgent = _userAgent
             };
 
-            var clipFileResponse =
-                await
-                    httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
+            await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
 
             var initialProgressArgs = new CourseDownloadingProgressArguments
             {
@@ -215,8 +218,6 @@ namespace VideoDownloader.App.BL
             _timer.Enabled = false;
             _timeoutProgress.Report(0);
             _downloadingProgress.ProgressChanged -= OnProgressChanged;
-
-
         }
 
         private void OnProgressChanged(object sender, FileDownloadingProgressArguments e)
@@ -224,7 +225,6 @@ namespace VideoDownloader.App.BL
             var progressArgs = new CourseDownloadingProgressArguments
             {
                 CurrentAction = "Downloading",
-                //CourseName = course.Title,
                 ClipName = e.FileName,
                 CourseProgress = _totalCourseDownloadingProgess,
                 ClipProgress = e.Percentage
@@ -262,16 +262,18 @@ namespace VideoDownloader.App.BL
 
         private string BuildViewclipData(RpcData rpcData, int moduleCounter, int clipCounter)
         {
-            ViewclipData viewclipData = new ViewclipData();
             Module module = rpcData.Payload.Course.Modules[moduleCounter - 1];
-            viewclipData.Author = module.Author;
-            viewclipData.IncludeCaptions = rpcData.Payload.Course.CourseHasCaptions;
-            viewclipData.ClipIndex = clipCounter - 1;
-            viewclipData.CourseName = rpcData.Payload.Course.Name;
-            viewclipData.Locale = "en";
-            viewclipData.ModuleName = module.Name;
-            viewclipData.MediaType = "mp4";
-            viewclipData.Quality = rpcData.Payload.Course.SupportsWideScreenVideoFormats ? "1280x720" : "1024x768";
+            ViewclipData viewclipData = new ViewclipData()
+            {
+                Author = module.Author,
+                IncludeCaptions = rpcData.Payload.Course.CourseHasCaptions,
+                ClipIndex = clipCounter - 1,
+                CourseName = rpcData.Payload.Course.Name,
+                Locale = "en",
+                ModuleName = module.Name,
+                MediaType = "mp4",
+                Quality = rpcData.Payload.Course.SupportsWideScreenVideoFormats ? "1280x720" : "1024x768"
+            };
             return Newtonsoft.Json.JsonConvert.SerializeObject(viewclipData);
         }
 
@@ -292,32 +294,37 @@ namespace VideoDownloader.App.BL
             return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
         }
 
-        public async Task<bool> DownloadProductsJsonAsync()
+        public async Task<bool> GetNoncachedProductsJsonAsync()
         {
             try
             {
-                var httpHelper = new HttpHelper
-                {
-                    AcceptEncoding = "",
-                    AcceptHeader = AcceptHeader.HtmlXml,
-                    ContentType = ContentType.AppXWwwFormUrlencode,
-                    Cookies = Cookies,
-                    Referrer = new Uri("https://www.pluralsight.com"),
-                    UserAgent = _userAgent
-                };
-                var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
-                    new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7100"),
-                    null, _token);
-
-                CachedProductsJson = productsJsonResponse.Content;
+                CachedProductsJson = await DownloadProductsJsonAsync();
                 ProcessResult();
-                //CachedProductsJson = await Task.Run<string>(() => { return File.ReadAllText("D:\\json.txt"); });
+                File.WriteAllText(FileName, CachedProductsJson);
                 return !string.IsNullOrEmpty(CachedProductsJson);
             }
             catch (Exception exc)
             {
                 return false;
             }
+        }
+
+        private async Task<string> DownloadProductsJsonAsync()
+        {
+            var httpHelper = new HttpHelper
+            {
+                AcceptEncoding = "",
+                AcceptHeader = AcceptHeader.HtmlXml,
+                ContentType = ContentType.AppXWwwFormUrlencode,
+                Cookies = Cookies,
+                Referrer = new Uri("https://www.pluralsight.com"),
+                UserAgent = _userAgent
+            };
+            var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
+                new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7100"),
+                null, _token);
+
+            return productsJsonResponse.Content;
         }
 
 
@@ -346,19 +353,19 @@ namespace VideoDownloader.App.BL
             }
         }
 
-        public async Task<bool> ReadFromFileProductsJsonAsync(string fileName)
+        public async Task<bool> GetCachedProductsAsync()
         {
             try
             {
-                if (File.Exists(fileName))
+                if (File.Exists(FileName))
                 {
-                    CachedProductsJson = await Task.Run(() => File.ReadAllText("D:\\json.txt"), _token);
+                    CachedProductsJson = await Task.Run(() => File.ReadAllText(FileName), _token);
                 }
                 else
                 {
-                    await DownloadProductsJsonAsync();
+                    CachedProductsJson = await DownloadProductsJsonAsync();
                 }
-
+                ProcessResult();
                 return !string.IsNullOrEmpty(CachedProductsJson);
             }
             catch (Exception exc)

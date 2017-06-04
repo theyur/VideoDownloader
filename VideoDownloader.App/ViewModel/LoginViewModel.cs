@@ -20,8 +20,9 @@ namespace VideoDownloader.App.ViewModel
 		private bool _loggingInAnimationVisible;
 		private bool _firstUserNameCheck = true;
 		private string _currentOperation = string.Empty;
-        
-		#endregion
+	    private bool _useCachedListOfProducts;
+
+	    #endregion
 
 		#region Constructors
 
@@ -47,6 +48,12 @@ namespace VideoDownloader.App.ViewModel
 		/// Close login form commmadnd
 		/// </summary>
 		public RelayCommand<ICloseable> CloseCommand { get; private set; }
+
+	    public bool UseCachedListOfProducts
+	    {
+	        get { return _useCachedListOfProducts; }
+	        set { Set(() => UseCachedListOfProducts, ref _useCachedListOfProducts, value); }
+	    }
 
 		public string UserName
 		{
@@ -117,7 +124,7 @@ namespace VideoDownloader.App.ViewModel
 				CurrentOperation = "Gathering products...";
 			    _courseService.Cookies = loginResult.Cookies;
 
-                bool received = await _courseService.DownloadProductsJsonAsync();
+                bool received = UseCachedListOfProducts ? await _courseService.GetCachedProductsAsync() : await _courseService.GetNoncachedProductsJsonAsync();
 				if (received)
 				{
 					Messenger.Default.Send(new NotificationMessage("CloseWindow"));

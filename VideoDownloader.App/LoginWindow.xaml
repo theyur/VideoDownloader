@@ -10,49 +10,43 @@
 		WindowStartupLocation="CenterScreen"
 		x:Name="LoginForm"
 		DataContext="{Binding LoginVm, Source={StaticResource Locator}}"
-        Title="Login" Height="250" Width="300" Background="Transparent">
-	<Border Padding="1" BorderThickness="4" Margin="5" CornerRadius="5" BorderBrush="Transparent">
-		<Border.Background>
-			<LinearGradientBrush EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
-				<GradientStop Offset="0" Color="#FF213BBD"/>
-                <GradientStop Color="#FF213BBD" Offset="1"/>
-				<GradientStop Color="#FF5E8EBA" Offset="0.536"/>
-				<GradientStop Color="#FF256AB0" Offset="0.636"/>
-			</LinearGradientBrush>
-		</Border.Background>
+        Title="Login" Height="270" Width="300" Background="Transparent">
+	<Border Padding="1" BorderThickness="4" Margin="5" CornerRadius="5" BorderBrush="Blue" Background="AliceBlue">
+		
 		<!--<Border.Effect>
 			<DropShadowEffect BlurRadius="10" Color="#FFA0A0A0"
              Direction="45" Opacity=".5" RenderingBias="Performance" ShadowDepth="5" />
 		</Border.Effect>-->
 		<Grid>
 			<Grid.RowDefinitions>
-				<RowDefinition Height="50" />
+				<RowDefinition Height="40" />
+				<RowDefinition Height="0.4*" />
+				<RowDefinition Height="0.45*" />
+				<RowDefinition Height="0.4*" />
+				<RowDefinition Height="0.45*" />
+				<RowDefinition Height="0.4*" />
 				<RowDefinition Height="0.5*" />
-				<RowDefinition Height="1*" />
-				<RowDefinition Height="0.5*" />
-				<RowDefinition Height="1*" />
-				<RowDefinition Height="1.2*" />
-				<RowDefinition Height="0.5*" />
+                <RowDefinition Height="0.25*" />
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="4*" />
 				<ColumnDefinition Width="4*" />
                 <ColumnDefinition Width="1*" />
 			</Grid.ColumnDefinitions>
-			<TextBlock Margin="5,2,5,23" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Center" Grid.Column="0" HorizontalAlignment="Center">
-			<Run FontWeight="Bold" FontSize="16" Text="Login to your account" />
+			<TextBlock Margin="5,5,5,2" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" Grid.Column="0" HorizontalAlignment="Center">
+			    <Run FontWeight="Bold" FontSize="16" Text="Login to your account" />
 			</TextBlock>
 			<Button Grid.Row="0" Grid.Column="2"
 					BorderThickness="0" 
 					Background="Transparent"
                     BorderBrush="Transparent"
-					Margin="0,0,0,23" Width="24" Height="24"
+					Margin="0,2,0,2" Width="24" Height="24"
 					Command="{Binding CloseCommand}"
 					Padding="-4"
 					CommandParameter="{Binding ElementName=LoginForm}"
                     Content="{StaticResource CloseButtonImage}"
-                    VerticalAlignment="Bottom"></Button>
-            <TextBlock Grid.Row="1" Grid.Column="0" FontSize="14" Grid.ColumnSpan="2" Margin="10,2,10,2" VerticalAlignment="Bottom" Text="Username" />
+                    VerticalAlignment="Top"></Button>
+            <TextBlock Grid.Row="1" Grid.Column="0" FontSize="14" Grid.ColumnSpan="2" Margin="10,0,10,2" VerticalAlignment="Bottom" Text="Username" />
 			<TextBox Text="{Binding UserName, Mode=TwoWay, ValidatesOnDataErrors=True, NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
 					 Style="{StaticResource TextBoxWithDefaultTextStyle}"
 					 Grid.Row="2"
@@ -68,9 +62,16 @@
 						 Grid.Column="0"
 						 Grid.ColumnSpan="2"
 						 Margin="10,2,10,2" />
+            <CheckBox Content="Use cached list of products"
+                      Grid.Column="0"
+                      Grid.Row="5"
+                      Margin="10 2"
+                      Grid.ColumnSpan="2"
+                      VerticalAlignment="Center"
+                      IsChecked="{Binding UseCachedListOfProducts}"/>
 			<Button Name="LoginButton"
                 VerticalAlignment="Center" 
-                Content="Login" Grid.Row="5"
+                Content="Login" Grid.Row="6"
 				Grid.ColumnSpan="2"
                 Grid.Column="0" Command="{Binding LoginCommand}" 
                 CommandParameter="{Binding ElementName=PasswordTextBox}" 
@@ -80,7 +81,7 @@
                 HorizontalAlignment="Stretch"
                 IsDefault="True">
 			</Button>
-			<TextBlock Grid.Row="6" Grid.Column="0" Margin="10,2,10,2" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Text="{Binding CurrentOperation}" />
+			<TextBlock Grid.Row="7" Grid.Column="0" Margin="10,2,10,2" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Text="{Binding CurrentOperation}" />
 		</Grid>
 	</Border>
 </Window>

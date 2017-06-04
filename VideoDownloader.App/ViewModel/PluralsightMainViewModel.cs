@@ -17,7 +17,7 @@ namespace VideoDownloader.App.ViewModel
         #region Fields
 
         private CancellationTokenSource _cancellationToken;
-        
+
         private Dictionary<string, int> _numberOfCoursesForTag;
         private List<CourseDescription> _allCourses;
         private IEnumerable<CourseDescription> _currentDisplayedCourses;
@@ -37,6 +37,7 @@ namespace VideoDownloader.App.ViewModel
         private string _coursesFilterText;
         private string _title;
         private string _currentUserAgent;
+        private bool _onlyForSelectedTag;
 
         #endregion
 
@@ -169,6 +170,12 @@ namespace VideoDownloader.App.ViewModel
             }
         }
 
+        public bool OnlyForSelectedTag
+        {
+            get { return _onlyForSelectedTag; }
+            set { Set(() => OnlyForSelectedTag, ref _onlyForSelectedTag, value); }
+        }
+
         public string CoursesFilterText
         {
             get { return _coursesFilterText ?? ""; }
@@ -176,7 +183,14 @@ namespace VideoDownloader.App.ViewModel
             {
                 if (Set(() => CoursesFilterText, ref _coursesFilterText, value))
                 {
-                    if (AllCourses.Any())
+                    if (OnlyForSelectedTag)
+                    {
+                        CurrentDisplayedFilteredCourses =
+                    new ObservableCollection<CourseDescription>(CurrentDisplayedCourses
+                    .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
+                    .OrderByDescending(c => c.PublishedDate));
+                    }
+                    else if (AllCourses.Any())
                     {
                         CurrentDisplayedFilteredCourses =
                             new ObservableCollection<CourseDescription>(AllCourses.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
@@ -196,8 +210,11 @@ namespace VideoDownloader.App.ViewModel
 
         public Dictionary<string, int> NumberOfCoursesForTag
         {
-            get { return _numberOfCoursesForTag.Where(tool => tool.Key.ToLower().Contains(TagsFilterText.ToLower()))
-                        .OrderBy(tool => tool.Key).ToDictionary(p => p.Key, p=>p.Value); }
+            get
+            {
+                return _numberOfCoursesForTag.Where(tool => tool.Key.ToLower().Contains(TagsFilterText.ToLower()))
+                      .OrderBy(tool => tool.Key).ToDictionary(p => p.Key, p => p.Value);
+            }
             set
             {
                 Set(() => NumberOfCoursesForTag, ref _numberOfCoursesForTag, value);
@@ -263,7 +280,7 @@ namespace VideoDownloader.App.ViewModel
             DownloadCourseCommand = new RelayCommand(OnDownloadCourseAsync, CanExecuteDownload);
             NumberOfCoursesForTag = _courseService.CoursesByToolName.ToDictionary(kvp => kvp.Key, v => v.Value.Count);
             AllCourses = _courseService.CoursesByToolName.Values.SelectMany(x => x).Distinct().ToList();
-            
+
         }
 
         #endregion

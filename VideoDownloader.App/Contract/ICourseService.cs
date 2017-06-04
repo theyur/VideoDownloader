@@ -9,9 +9,11 @@ namespace VideoDownloader.App.Contract
 	public interface ICourseService
 	{
 
-		Task<bool> DownloadProductsJsonAsync();
+		Task<bool> GetNoncachedProductsJsonAsync();
 
-		string CachedProductsJson { get; set; }
+	    Task<bool> GetCachedProductsAsync();
+
+        string CachedProductsJson { get; set; }
 
 	    string Cookies { get; set; }
 
