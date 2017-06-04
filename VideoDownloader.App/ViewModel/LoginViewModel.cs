@@ -110,8 +110,6 @@ namespace VideoDownloader.App.ViewModel
 
 		private async Task OnLogin(object passwordControl)
 		{
-		    UserName = "toporova.darya@inbox.ru";
-		    Password = "1q1q1q1q";
 			LoginButtonEnabled = false;
             Password = GetPassword(passwordControl);
 		    CurrentOperation = "Trying to login, wait please...";

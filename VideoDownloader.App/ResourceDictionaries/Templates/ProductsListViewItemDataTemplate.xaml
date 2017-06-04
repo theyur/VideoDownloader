@@ -65,21 +65,6 @@
 				</CheckBox>
 			</Grid>
 		</Border>
-		<DataTemplate.Triggers>
-			<DataTrigger Binding="{Binding RelativeSource=
-            {RelativeSource Mode=FindAncestor, AncestorType=
-                {x:Type ListViewItem}},Path=IsMouseOver}" Value="True">
-				<Setter TargetName="CourseItemBorder" Property="BorderBrush"  Value="#FFFF6600"/>
-				<Setter TargetName="CourseItemBorder" Property="Background" Value="#FFFF6600"/>
-			</DataTrigger>
-
-			<DataTrigger Binding="{Binding RelativeSource=
-            {RelativeSource Mode=FindAncestor, AncestorType=
-                {x:Type ListViewItem}},Path=IsSelected}" Value="True">
-				<Setter TargetName="CourseItemBorder" Property="BorderBrush"  Value="#FFFF9900"/>
-				<Setter TargetName="CourseItemBorder" Property="Background" Value="#FFFF9900"/>
-			</DataTrigger>
-
-		</DataTemplate.Triggers>
+		
 	</DataTemplate>
 </ResourceDictionary>

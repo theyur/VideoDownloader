@@ -6,10 +6,9 @@
 	<converters:TagConverter x:Key="TagConverter"/>
 	<converters:ValueToCountConverter x:Key="ValueToCountConverter"/>
 	<DataTemplate x:Key="TagListViewItemDataTemplate">
-		<!--internal border-->
-		<Border x:Name="Border"
-                Margin="0"
-                Padding="5,2,2,2" BorderThickness="2" BorderBrush="Orange" Background="AntiqueWhite" CornerRadius="2" Cursor="Hand">
+
+        <!--internal border. Background must be set to catch MouseLeftButtonUp interaction-->
+		<Border x:Name="Border" Background="Transparent">
 			<i:Interaction.Triggers>
 				<i:EventTrigger EventName="MouseLeftButtonUp">
 					<!--Since we need the datacontext of PluralsightMainWindow we write it explicitly, otherwise we would get the datacontext of the listview itsself-->
