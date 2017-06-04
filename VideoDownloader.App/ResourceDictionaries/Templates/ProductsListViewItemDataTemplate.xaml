@@ -11,8 +11,6 @@
 	<converters:IsoTimeToTimeSpanConverter x:Key="IsoTimeToTimeSpanConverter"/>
                                     	
 	<DataTemplate x:Key="ProductsListViewItemDataTemplate">
-		<Border x:Name="CourseItemBorder"
-                 Padding="5,2,2,2" BorderThickness="1" BorderBrush="Orange" Background="AntiqueWhite" CornerRadius="2">
 			<Grid x:Name="AuthorsLayout">
 				<Grid.RowDefinitions>
 					<RowDefinition Height="1*" />
@@ -64,7 +62,5 @@
 					</CheckBox.LayoutTransform>
 				</CheckBox>
 			</Grid>
-		</Border>
-		
 	</DataTemplate>
 </ResourceDictionary>

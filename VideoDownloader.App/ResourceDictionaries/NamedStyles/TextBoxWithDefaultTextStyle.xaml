@@ -10,7 +10,7 @@
 		<Setter Property="BorderBrush" Value="#FF858585" />
 		<Setter Property="BorderThickness" Value="3" />
 		<Setter Property="Border.CornerRadius" Value="6" />
-		<Setter Property="Template" Value="{StaticResource TextBoxBaseControlTemplate}"></Setter>
+		<Setter Property="Template" Value="{StaticResource TextBoxBaseControlTemplate}"/>
 		<Style.Triggers>
 			<Trigger Property="Validation.HasError" Value="True">
 				<Setter Property="Validation.ErrorTemplate" Value="{StaticResource TextBoxValidationTemplate}"></Setter>

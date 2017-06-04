@@ -119,7 +119,7 @@ namespace VideoDownloader.App.ViewModel
 
 			if (loginResult.Status == LoginStatus.LoggedIn)
 			{
-				CurrentOperation = "Gathering products...";
+				CurrentOperation = UseCachedListOfProducts ? "Reading cached products..." : "Downloading list of products...";
 			    _courseService.Cookies = loginResult.Cookies;
 
                 bool received = UseCachedListOfProducts ? await _courseService.GetCachedProductsAsync() : await _courseService.GetNoncachedProductsJsonAsync();

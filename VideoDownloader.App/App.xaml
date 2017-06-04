@@ -22,6 +22,7 @@
 				<ResourceDictionary Source="ResourceDictionaries\Templates\ProductsListViewItemDataTemplate.xaml" />
 
                 <ResourceDictionary Source="ResourceDictionaries\NamedStyles\TagListViewItemStyle.xaml" />
+                <ResourceDictionary Source="ResourceDictionaries\NamedStyles\ProductListViewItemStyle.xaml" />
                 
                 <ResourceDictionary Source="ResourceDictionaries\NamedStyles\TagListViewControlStyle.xaml" />
                 <ResourceDictionary Source="ResourceDictionaries\NamedStyles\ProductsListViewControlStyle.xaml" />

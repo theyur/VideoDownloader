@@ -86,6 +86,7 @@
 				  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
 				  Style="{StaticResource ProductsListViewControlStyle}"
 				  ItemsSource="{Binding CurrentDisplayedFilteredCourses}"
+                      ItemContainerStyle="{StaticResource ProductListViewItemStyle}"
 				  >
 			</ListView>
 			<Button		Grid.Column="1" 
