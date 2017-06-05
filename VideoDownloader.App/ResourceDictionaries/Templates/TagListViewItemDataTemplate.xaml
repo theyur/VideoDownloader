@@ -8,7 +8,7 @@
 	<DataTemplate x:Key="TagListViewItemDataTemplate">
 
         <!--internal border. Background must be set to catch MouseLeftButtonUp interaction-->
-		<Border x:Name="Border" Background="Transparent">
+		<Border x:Name="Border" Background="Transparent" Padding="2 2 2 2">
 			<i:Interaction.Triggers>
 				<i:EventTrigger EventName="MouseLeftButtonUp">
 					<!--Since we need the datacontext of PluralsightMainWindow we write it explicitly, otherwise we would get the datacontext of the listview itsself-->

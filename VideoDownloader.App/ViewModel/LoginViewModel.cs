@@ -39,14 +39,8 @@ namespace VideoDownloader.App.ViewModel
 
 		#region Properties
 
-		/// <summary>
-		/// Login command
-		/// </summary>
 		public RelayCommand<object> LoginCommand { get; private set; }
 
-		/// <summary>
-		/// Close login form commmadnd
-		/// </summary>
 		public RelayCommand<ICloseable> CloseCommand { get; private set; }
 
 	    public bool UseCachedListOfProducts

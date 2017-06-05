@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using VideoDownloader.App.BL.Messages;
 using VideoDownloader.App.Contract;
 using VideoDownloader.App.Model;
 
@@ -42,6 +43,10 @@ namespace VideoDownloader.App.ViewModel
         #endregion
 
         #region Properties
+
+        public IMessenger Messenger {
+            get { return base.MessengerInstance; }
+        }
 
         public bool CanDownload
         {
@@ -294,7 +299,7 @@ namespace VideoDownloader.App.ViewModel
 
         private void OnOpenSettingsWindow()
         {
-            Messenger.Default.Send(new NotificationMessage("OpenSettingsWindow"));
+            Messenger.Send(new OpenSettingsMessage());
         }
 
         private bool CanExecuteDownload()
@@ -323,29 +328,37 @@ namespace VideoDownloader.App.ViewModel
 
         private async void OnDownloadCourseAsync()
         {
-            IsDownloading = true;
-            _cancellationToken = new CancellationTokenSource();
-
-            var downloadingProgress = new Progress<CourseDownloadingProgressArguments>();
-            downloadingProgress.ProgressChanged += (s, e) =>
+            try
             {
-                DownloadingProgress = e.ClipProgress;
-                CurrentAction = e.CurrentAction;
-                DownloadingCourse = e.ClipName;
-            };
+                IsDownloading = true;
+                _cancellationToken = new CancellationTokenSource();
 
-            var timeoutProgress = new Progress<int>();
-            timeoutProgress.ProgressChanged += (s, e) =>
-            {
-                CurrentTimeout = e;
-            };
+                var downloadingProgress = new Progress<CourseDownloadingProgressArguments>();
+                downloadingProgress.ProgressChanged += (s, e) =>
+                {
+                    DownloadingProgress = e.ClipProgress;
+                    CurrentAction = e.CurrentAction;
+                    DownloadingCourse = e.ClipName;
+                };
 
-            var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
-            foreach (var course in coursesToDownload)
-            {
-                await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
+                var timeoutProgress = new Progress<int>();
+                timeoutProgress.ProgressChanged += (s, e) =>
+                {
+                    CurrentTimeout = e;
+                };
+
+                var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
+                foreach (var course in coursesToDownload)
+                {
+                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress,
+                        _cancellationToken.Token);
+                }
+                IsDownloading = false;
             }
-            IsDownloading = false;
+            catch (Exception exc)
+            {
+                Messenger.Send(new ExceptionThrownMessage(exc.Message));
+            }
         }
 
         private async void OnCourseTagSelected(string toolName)

@@ -7,13 +7,14 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using VideoDownloader.App.BL.Exceptions;
 using VideoDownloader.App.Contract;
 using VideoDownloader.App.Model;
 using Timer = System.Timers.Timer;
 
 namespace VideoDownloader.App.BL
 {
-    class PluralsightCourseService : ICourseService
+    class PluralsightCourseService : ICourseService, IDisposable
     {
         #region Constants
         
@@ -34,6 +35,7 @@ namespace VideoDownloader.App.BL
         private int _totalCourseDownloadingProgess;
         private int _timeout;
         private IProgress<int> _timeoutProgress;
+        private bool _disposed;
 
         #endregion
 
@@ -105,6 +107,7 @@ namespace VideoDownloader.App.BL
                     await DownloadModule(rpcData, courseDirectory, moduleCounter, module);
                 }
             }
+
             catch (OperationCanceledException /*ex*/)
             {
 
@@ -167,6 +170,10 @@ namespace VideoDownloader.App.BL
                         new Uri("https://app.pluralsight.com/video/clips/viewclip"),
                         postJson,
                         _token);
+                    if (viewclipResonse.Content == "Unauthorized")
+                    {
+                        throw new UnauthorizedException("Check your subscription");
+                    }
 
                     var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
                     await DownloadClip(new Uri(clipFile.Urls[1].Url),
@@ -378,6 +385,26 @@ namespace VideoDownloader.App.BL
         {
             var courses = await Task.Run(() => CoursesByToolName.Single(kvp => kvp.Key == toolName).Value, _token);
             return courses;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _timer?.Dispose();
+
+                }
+            }
+            _disposed = true;
+            
         }
     }
 }
