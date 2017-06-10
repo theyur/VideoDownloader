@@ -38,36 +38,30 @@
     <ApplicationIcon>Resources/videodownloader.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autofac, Version=3.5.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
-      <HintPath>..\packages\Autofac.3.5.2\lib\net40\Autofac.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Autofac, Version=4.6.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.4.6.0\lib\net45\Autofac.dll</HintPath>
     </Reference>
-    <Reference Include="GalaSoft.MvvmLight, Version=5.2.0.37222, Culture=neutral, PublicKeyToken=e7570ab207bcb616, processorArchitecture=MSIL">
-      <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\net45\GalaSoft.MvvmLight.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="GalaSoft.MvvmLight, Version=5.4.0.0, Culture=neutral, PublicKeyToken=e7570ab207bcb616, processorArchitecture=MSIL">
+      <HintPath>..\packages\MvvmLightLibs.5.4.0-alpha\lib\net45\GalaSoft.MvvmLight.dll</HintPath>
     </Reference>
-    <Reference Include="GalaSoft.MvvmLight.Extras, Version=5.2.0.37222, Culture=neutral, PublicKeyToken=669f0b5e8f868abf, processorArchitecture=MSIL">
-      <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\net45\GalaSoft.MvvmLight.Extras.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="GalaSoft.MvvmLight.Extras, Version=5.4.0.0, Culture=neutral, PublicKeyToken=669f0b5e8f868abf, processorArchitecture=MSIL">
+      <HintPath>..\packages\MvvmLightLibs.5.4.0-alpha\lib\net45\GalaSoft.MvvmLight.Extras.dll</HintPath>
     </Reference>
-    <Reference Include="GalaSoft.MvvmLight.Platform, Version=5.2.0.37226, Culture=neutral, PublicKeyToken=5f873c45e98af8a1, processorArchitecture=MSIL">
-      <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\net45\GalaSoft.MvvmLight.Platform.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="GalaSoft.MvvmLight.Platform, Version=5.4.0.0, Culture=neutral, PublicKeyToken=5f873c45e98af8a1, processorArchitecture=MSIL">
+      <HintPath>..\packages\MvvmLightLibs.5.4.0-alpha\lib\net45\GalaSoft.MvvmLight.Platform.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\CommonServiceLocator.1.3\lib\portable-net4+sl5+netcore45+wpa81+wp8\Microsoft.Practices.ServiceLocation.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\net45\System.Windows.Interactivity.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\MvvmLightLibs.5.4.0-alpha\lib\net45\System.Windows.Interactivity.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -113,8 +107,11 @@
     </ApplicationDefinition>
     <Compile Include="AttachedProperty\HyperlinkExtensions.cs" />
     <Compile Include="AutofacServiceLocator.cs" />
+    <Compile Include="BL\Exceptions\UnauthorizedException.cs" />
     <Compile Include="BL\FileConfigProfider.cs" />
     <Compile Include="BL\HttpHelper.cs" />
+    <Compile Include="BL\Messages\ExceptionThrownMessage.cs" />
+    <Compile Include="BL\Messages\OpenSettingsMessage.cs" />
     <Compile Include="BL\PluralsightCourseService.cs" />
     <Compile Include="BL\PluralsightLoginService.cs" />
     <Compile Include="Contract\ICloseable.cs" />
@@ -123,7 +120,6 @@
     <Compile Include="Contract\ILoginService.cs" />
     <Compile Include="Converters\AuthorArrayConverter.cs" />
     <Compile Include="Converters\BoolToVisibleConverter.cs" />
-    <Compile Include="Converters\BoolToVisibleReversedConverter.cs" />
     <Compile Include="Converters\HasTranscriptConverter.cs" />
     <Compile Include="Converters\IntToTimeSpanStringConverter.cs" />
     <Compile Include="Converters\IsoTimeToTimeSpanConverter.cs" />
@@ -162,6 +158,7 @@
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModel\LoginViewModel.cs" />
+    <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\PluralsightMainViewModel.cs" />
     <Compile Include="ViewModel\SettingsViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
@@ -218,10 +215,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ResourceDictionaries\Templates\PasswordBoxControlTemplate.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ResourceDictionaries\Templates\TagListViewItemControlTemplate.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

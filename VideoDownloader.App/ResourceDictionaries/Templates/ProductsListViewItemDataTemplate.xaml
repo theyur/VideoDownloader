@@ -11,7 +11,7 @@
 	<converters:IsoTimeToTimeSpanConverter x:Key="IsoTimeToTimeSpanConverter"/>
                                     	
 	<DataTemplate x:Key="ProductsListViewItemDataTemplate">
-			<Grid x:Name="AuthorsLayout">
+			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="1*" />
 					<RowDefinition Height="1*" />
