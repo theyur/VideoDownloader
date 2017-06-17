@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:res="clr-namespace:VideoDownloader.App.Properties"
         mc:Ignorable="d"
 		WindowState="Normal"
 		Title="{Binding Title}"
@@ -35,17 +36,17 @@
 			</Grid.ColumnDefinitions>
 			<ToolBarTray Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" VerticalAlignment="Stretch" HorizontalAlignment="Left">
 				<ToolBar BorderBrush="Blue">
-					<Button ToolTip="Open downloads" Command="{Binding OpenDownloadsFolderCommand}">
+                    <Button ToolTip="{x:Static res:Resources.OpenDownloads}" Command="{Binding OpenDownloadsFolderCommand}">
 						<Image Source="Resources\openfolder.png" MaxHeight="24"></Image>
 					</Button>
-					<Button ToolTip="Open settings" Command="{Binding OpenSettingsWindowCommand}">
+                    <Button ToolTip="{x:Static res:Resources.OpenSettings}" Command="{Binding OpenSettingsWindowCommand}">
 						<Image Source="Resources\settings.png" MaxHeight="24"></Image>
 					</Button>
 				</ToolBar>
 			</ToolBarTray>
 			
 			<TextBox Text="{Binding TagsFilterText, UpdateSourceTrigger=PropertyChanged}"
-					 Tag="Search tags"
+					 Tag="{x:Static res:Resources.Find}"
 					 Style="{StaticResource TextBoxWithDefaultTextStyle}"
 					 Grid.Row="1"
 					 Grid.Column="0"
@@ -62,14 +63,14 @@
 				  Style="{StaticResource TagListViewControlStyle}">
 			</ListView>
 
-			<TextBox Tag="Search product"
+            <TextBox Tag="{x:Static res:Resources.Find}"
 					 Style="{StaticResource TextBoxWithDefaultTextStyle}"
 					 Text="{Binding CoursesFilterText, UpdateSourceTrigger=PropertyChanged}"
 					 Grid.Row="1"
 					 Grid.Column="1"
 					 Margin="10,2,10,2"
 					 Grid.ColumnSpan="2"/>
-			<CheckBox Content="Only for selected tag"
+            <CheckBox Content="{x:Static res:Resources.FindForSelectedTag}"
                       Grid.Row="1"
                       Grid.Column="3"
                       Grid.ColumnSpan="2"
@@ -97,8 +98,11 @@
                         HorizontalAlignment="Stretch" 
                         VerticalAlignment="Stretch">
 				<WrapPanel>
-					<TextBlock Text="Download: " HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
-					<TextBlock Text="{Binding NumberOfSelectedCourses}" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                    <TextBlock HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                        <Run Text="{x:Static res:Resources.DownloadWithColon}" />
+                        <Run Text=" "/>
+                    </TextBlock>
+                    <TextBlock Text="{Binding NumberOfSelectedCourses}" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
 				</WrapPanel>
 			</Button>
 			<Button     Grid.Column="2" 
@@ -109,7 +113,7 @@
                         HorizontalAlignment="Stretch" 
                         VerticalAlignment="Stretch">
 				<WrapPanel>
-					<TextBlock Text="Cancel" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                    <TextBlock Text="{x:Static res:Resources.Cancel}" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
 				</WrapPanel>
 			</Button>
 
@@ -130,7 +134,8 @@
 					<Run Text="%"/>
 					</TextBlock>
 					<TextBlock Margin="5 0 0 5" Visibility="{Binding CurrentTimeout, Converter={StaticResource BoolToVisibleConverter}}">
-					<Run Text="Timeout: "/>
+					<Run Text="{x:Static res:Resources.TimeoutWithColon}"/>
+                    <Run Text=" "/>
 					<Run Text="{Binding CurrentTimeout, Converter={StaticResource IntToTimeSpanStringConverter}}"/>
 					</TextBlock>
 				</WrapPanel>

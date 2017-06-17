@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace VideoDownloader.App.Model
+﻿namespace VideoDownloader.App.Model
 {
     public class AllProducts
 	{

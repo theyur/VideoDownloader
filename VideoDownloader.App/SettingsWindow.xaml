@@ -1,13 +1,14 @@
-﻿<Window x:Class="VideoDownloader.App.SettingsWindow"
+﻿<Window x:Uid="Window_1" x:Class="VideoDownloader.App.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:res="clr-namespace:VideoDownloader.App.Properties"
 		DataContext="{Binding SettingsVm, Source={StaticResource Locator}}"
         mc:Ignorable="d"
         Title="Settings" Height="200" Width="300" WindowStyle="ToolWindow">
-	<Grid x:Name="LayoutRoot">
+	<Grid x:Uid="LayoutRoot" x:Name="LayoutRoot">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30" />
 			<RowDefinition Height="30" />
@@ -31,7 +32,7 @@
 			Grid.Row="0"
 			Grid.Column="0"
 			TextWrapping="Wrap"
-			Text="Minimum timeout:"
+			Text="{x:Static res:Resources.MinimumTimeoutWithColon}"
 			VerticalAlignment="Center"/>
 		
 		<xctk:IntegerUpDown 
@@ -53,7 +54,7 @@
 			Grid.Row="1"
 			Grid.Column="0" 
 			TextWrapping="Wrap"
-			Text="Maximum timeout:"
+			Text="{x:Static res:Resources.MaximumTimeoutWithColon}"
 			VerticalAlignment="Center"/>
 		
 		<xctk:IntegerUpDown 
@@ -75,7 +76,7 @@
 			Grid.Row="2"
 			Grid.Column="0" 
 			TextWrapping="Wrap" 
-			Text="Downloads folder:"
+			Text="{x:Static res:Resources.DownloadsFolder}"
 			VerticalAlignment="Center"/>
 		
 		<TextBox
@@ -90,7 +91,7 @@
 			VerticalAlignment="Center"/>
 
 		<Button Content="..." Margin="2 1 2 1" Grid.Row="3" VerticalAlignment="Center" Grid.Column="5" Command="{Binding OpenSelectFolderDialogCommand}" />
-		<Button Margin="2 1 2 1" Grid.Row="4" Content="Save"  VerticalAlignment="Center" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding SaveSettingsCommand}" />
-		<Button Content="Cancel" Margin="2 1 2 1" Grid.Row="4" VerticalAlignment="Center" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding CancelCommand}" />
+		<Button Margin="2 1 2 1" Grid.Row="4" Content="{x:Static res:Resources.Save}"  VerticalAlignment="Center" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding SaveSettingsCommand}" />
+        <Button Content="{x:Static res:Resources.Cancel}" Margin="2 1 2 1" Grid.Row="4" VerticalAlignment="Center" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding CancelCommand}" />
 	</Grid>
 </Window>

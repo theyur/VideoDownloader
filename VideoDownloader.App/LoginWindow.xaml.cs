@@ -12,7 +12,7 @@ namespace VideoDownloader.App
 	{
 		public LoginWindow()
 		{
-			InitializeComponent();
+            InitializeComponent();
 			Closing += (s, e) => ViewModelLocator.Cleanup();
 			MouseLeftButtonDown += delegate {DragMove(); };
 			Messenger.Default.Register<NotificationMessage>(this, (message) =>

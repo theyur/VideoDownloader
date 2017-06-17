@@ -2,21 +2,19 @@
 
 namespace VideoDownloader.App.Extension
 {
-	public static class DictionaryExtension
-	{
-		public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
-	where TValue : new()
-		{
-			TValue val;
+    public static class DictionaryExtension
+    {
+        public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key) where TValue : new()
+        {
 
-			if (dict.TryGetValue(key, out val))
-			{
-				return val;
-			}
-			val = new TValue();
-			dict.Add(key, val);
+            if (dict.TryGetValue(key, out TValue val))
+            {
+                return val;
+            }
+            val = new TValue();
+            dict.Add(key, val);
 
-			return val;
-		}
-	}
+            return val;
+        }
+    }
 }

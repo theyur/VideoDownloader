@@ -16,7 +16,7 @@ namespace VideoDownloader.App.Converters
 			{
 				TimeSpan timeSpan = XmlConvert.ToTimeSpan((string)value);
 
-				return timeSpan;
+				return timeSpan.ToString(@"hh\:mm\:ss");
 			}
 			return new TimeSpan();
 		}

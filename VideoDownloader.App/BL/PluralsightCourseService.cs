@@ -16,11 +16,6 @@ namespace VideoDownloader.App.BL
 {
     class PluralsightCourseService : ICourseService, IDisposable
     {
-        #region Constants
-        
-        const string FileName = "products.json";
-
-        #endregion
         #region Fields
 
         private readonly object _syncObj = new object();
@@ -30,9 +25,9 @@ namespace VideoDownloader.App.BL
 
         private readonly string _userAgent;
         private CancellationToken _token;
-        private IProgress<CourseDownloadingProgressArguments> _clipDownloadingProgress;
-        private Progress<FileDownloadingProgressArguments> _downloadingProgress;
-        private int _totalCourseDownloadingProgess;
+        private IProgress<CourseDownloadingProgressArguments> _courseDownloadingProgress;
+
+        private int _totalCourseDownloadingProgessRatio;
         private int _timeout;
         private IProgress<int> _timeoutProgress;
         private bool _disposed;
@@ -52,8 +47,10 @@ namespace VideoDownloader.App.BL
         #region Properties
 
         public string Cookies { get; set; }
+
         public Dictionary<string, List<CourseDescription>> CoursesByToolName { get; set; } = new Dictionary<string, List<CourseDescription>>();
-        public string CachedProductsJson { get; set; }
+
+        public string CachedProductsJson { get; private set; }
 
         #endregion
 
@@ -70,7 +67,7 @@ namespace VideoDownloader.App.BL
         {
             var regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
             var r = new Regex($"[{Regex.Escape(regexSearch)}]");
-            path = r.Replace(path, "");
+            path = r.Replace(path, string.Empty);
             return path;
         }
 
@@ -80,10 +77,10 @@ namespace VideoDownloader.App.BL
             CancellationToken token)
         {
             _timeoutProgress = timeoutProgress;
-            _clipDownloadingProgress = downloadingProgress;
+            _courseDownloadingProgress = downloadingProgress;
 
             _token = token;
-            var rpcUri = "https://app.pluralsight.com/player/functions/rpc";
+            var rpcUri = Properties.Settings.Default.RpcUri;
 
             RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
 
@@ -121,7 +118,7 @@ namespace VideoDownloader.App.BL
                     ClipProgress = 0
                 };
 
-                _clipDownloadingProgress.Report(progressArgs);
+                _courseDownloadingProgress.Report(progressArgs);
                 if (_timer != null)
                 {
                     _timer.Enabled = false;
@@ -146,7 +143,7 @@ namespace VideoDownloader.App.BL
             var course = rpcData.Payload.Course;
             var clipCounter = 0;
             string referrer =
-                   $"https://app.pluralsight.com/player?course={course.Name}&author={module.Author}&name={module.Name}&clip={clipCounter - 1}&mode=live";
+                   $"https://{Properties.Settings.Default.SiteHostName}/player?course={course.Name}&author={module.Author}&name={module.Name}&clip={clipCounter - 1}&mode=live";
 
             HttpHelper httpHelper = new HttpHelper
             {
@@ -164,15 +161,15 @@ namespace VideoDownloader.App.BL
                 var postJson = BuildViewclipData(rpcData, moduleCounter, clipCounter);
 
                 var fileName = GetFullFileNameWithoutExtension(clipCounter, moduleDirectory, clip);
-                if (!File.Exists($"{fileName}.mp4"))
+                if (!File.Exists($"{fileName}.{Properties.Settings.Default.ClipExtensionMp4}"))
                 {
                     var viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
-                        new Uri("https://app.pluralsight.com/video/clips/viewclip"),
+                        new Uri(Properties.Settings.Default.ViewClipUrl),
                         postJson,
                         _token);
                     if (viewclipResonse.Content == "Unauthorized")
                     {
-                        throw new UnauthorizedException("Check your subscription");
+                        throw new UnauthorizedException(Properties.Resources.CheckYourSubscription);
                     }
 
                     var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
@@ -190,33 +187,33 @@ namespace VideoDownloader.App.BL
 
             RemovePartiallyDownloadedFile(fileNameWithoutExtension);
 
-            var fileName = $"{fileNameWithoutExtension}.part";
-            _totalCourseDownloadingProgess = (int)(((double)clipCounter) / partsNumber * 100);
+            var fileName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}";
+            _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
 
             var httpHelper = new HttpHelper
             {
-                AcceptEncoding = "",
+                AcceptEncoding = string.Empty,
                 AcceptHeader = AcceptHeader.All,
                 ContentType = ContentType.Video,
                 Cookies = Cookies,
-                Referrer = new Uri("http://vid20.pluralsight.com"),
+                Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
                 UserAgent = _userAgent
             };
 
             await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
 
-            var initialProgressArgs = new CourseDownloadingProgressArguments
+            _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
             {
-                CurrentAction = "Downloading",
+                CurrentAction = Properties.Resources.Downloading,
                 ClipName = fileName,
-                CourseProgress = _totalCourseDownloadingProgess,
-                ClipProgress = 100
-            };
-            _clipDownloadingProgress.Report(initialProgressArgs);
-            _downloadingProgress = new Progress<FileDownloadingProgressArguments>();
-            _downloadingProgress.ProgressChanged += OnProgressChanged;
+                CourseProgress = _totalCourseDownloadingProgessRatio,
+                ClipProgress = 0
+            });
 
-            await httpHelper.DownloadWithProgressAsync(clipUrl, $"{fileNameWithoutExtension}.mp4", _downloadingProgress, _token);
+            var fileDownloadingProgress = new Progress<FileDownloadingProgressArguments>();
+            fileDownloadingProgress.ProgressChanged += OnProgressChanged;
+
+            await httpHelper.DownloadWithProgressAsync(clipUrl, $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}", fileDownloadingProgress, _token);
 
             _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
 
@@ -224,27 +221,27 @@ namespace VideoDownloader.App.BL
             await Task.Delay(_timeout * 1000, _token);
             _timer.Enabled = false;
             _timeoutProgress.Report(0);
-            _downloadingProgress.ProgressChanged -= OnProgressChanged;
+            fileDownloadingProgress.ProgressChanged -= OnProgressChanged;
         }
 
         private void OnProgressChanged(object sender, FileDownloadingProgressArguments e)
         {
             var progressArgs = new CourseDownloadingProgressArguments
             {
-                CurrentAction = "Downloading",
+                CurrentAction = Properties.Resources.Downloading,
                 ClipName = e.FileName,
-                CourseProgress = _totalCourseDownloadingProgess,
+                CourseProgress = _totalCourseDownloadingProgessRatio,
                 ClipProgress = e.Percentage
             };
-            _clipDownloadingProgress.Report(progressArgs);
+            _courseDownloadingProgress.Report(progressArgs);
         }
 
 
         private static void RemovePartiallyDownloadedFile(string fileNameWithoutExtension)
         {
-            if (File.Exists($"{fileNameWithoutExtension}.part"))
+            if (File.Exists($"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}"))
             {
-                File.Delete($"{fileNameWithoutExtension}.part");
+                File.Delete($"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}");
             }
         }
 
@@ -276,9 +273,9 @@ namespace VideoDownloader.App.BL
                 IncludeCaptions = rpcData.Payload.Course.CourseHasCaptions,
                 ClipIndex = clipCounter - 1,
                 CourseName = rpcData.Payload.Course.Name,
-                Locale = "en",
+                Locale = Properties.Settings.Default.EnglishLocale,
                 ModuleName = module.Name,
-                MediaType = "mp4",
+                MediaType = Properties.Settings.Default.ClipExtensionMp4,
                 Quality = rpcData.Payload.Course.SupportsWideScreenVideoFormats ? "1280x720" : "1024x768"
             };
             return Newtonsoft.Json.JsonConvert.SerializeObject(viewclipData);
@@ -290,10 +287,10 @@ namespace VideoDownloader.App.BL
             var httpHelper = new HttpHelper
             {
                 AcceptHeader = AcceptHeader.JsonTextPlain,
-                AcceptEncoding = "",
+                AcceptEncoding = string.Empty,
                 ContentType = ContentType.AppJsonUtf8,
                 Cookies = Cookies,
-                Referrer = new Uri("https://www.pluralsight.com"),
+                Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
                 UserAgent = _userAgent
             };
             var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, _token);
@@ -301,16 +298,15 @@ namespace VideoDownloader.App.BL
             return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
         }
 
-        public async Task<bool> GetNoncachedProductsJsonAsync()
+        public async Task<bool> ProcessNoncachedProductsJsonAsync()
         {
             try
             {
                 CachedProductsJson = await DownloadProductsJsonAsync();
                 ProcessResult();
-                File.WriteAllText(FileName, CachedProductsJson);
                 return !string.IsNullOrEmpty(CachedProductsJson);
             }
-            catch (Exception exc)
+            catch (Exception)
             {
                 return false;
             }
@@ -320,15 +316,15 @@ namespace VideoDownloader.App.BL
         {
             var httpHelper = new HttpHelper
             {
-                AcceptEncoding = "",
+                AcceptEncoding = string.Empty,
                 AcceptHeader = AcceptHeader.HtmlXml,
                 ContentType = ContentType.AppXWwwFormUrlencode,
                 Cookies = Cookies,
-                Referrer = new Uri("https://www.pluralsight.com"),
+                Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
                 UserAgent = _userAgent
             };
             var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
-                new Uri("https://app.pluralsight.com/search/proxy?i=1&q1=course&x1=categories&m_Sort=updated_date&count=7100"),
+                new Uri(Properties.Settings.Default.AllCoursesUrl),
                 null, _token);
 
             return productsJsonResponse.Content;
@@ -343,7 +339,7 @@ namespace VideoDownloader.App.BL
             {
                 try
                 {
-                    var tools = product.Tools?.Split('|') ?? new[] { "No category" };
+                    var tools = product.Tools?.Split('|') ?? new[] { "-" };
                     foreach (var tool in tools)
                     {
                         if (!CoursesByToolName.ContainsKey(tool))
@@ -353,29 +349,30 @@ namespace VideoDownloader.App.BL
                         CoursesByToolName[tool].Add(product);
                     }
                 }
-                catch (Exception exc)
+                catch (Exception)
                 {
                     return;
                 }
             }
         }
 
-        public async Task<bool> GetCachedProductsAsync()
+        public async Task<bool> ProcessCachedProductsAsync()
         {
             try
             {
-                if (File.Exists(FileName))
+                if (File.Exists(Properties.Settings.Default.FileNameForJsonOfCourses))
                 {
-                    CachedProductsJson = await Task.Run(() => File.ReadAllText(FileName), _token);
+                    CachedProductsJson = await Task.Run(() => File.ReadAllText(Properties.Settings.Default.FileNameForJsonOfCourses), _token);
+                    ProcessResult();
                 }
                 else
                 {
-                    CachedProductsJson = await DownloadProductsJsonAsync();
+                    await ProcessNoncachedProductsJsonAsync();
                 }
-                ProcessResult();
+                
                 return !string.IsNullOrEmpty(CachedProductsJson);
             }
-            catch (Exception exc)
+            catch (Exception)
             {
                 return false;
             }

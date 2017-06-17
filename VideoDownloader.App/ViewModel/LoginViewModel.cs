@@ -3,6 +3,7 @@ using GalaSoft.MvvmLight.CommandWpf;
 using GalaSoft.MvvmLight.Messaging;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using VideoDownloader.App.Contract;
 
@@ -104,33 +105,34 @@ namespace VideoDownloader.App.ViewModel
 
 		private async Task OnLogin(object passwordControl)
 		{
-			LoginButtonEnabled = false;
+            LoginButtonEnabled = false;
             Password = GetPassword(passwordControl);
-		    CurrentOperation = "Trying to login, wait please...";
+            CurrentOperation = Properties.Resources.TryingToLogin;
             LoginInProgress = true;
 
             LoginResult loginResult = await _loginService.LoginAsync(UserName, Password);
 
 			if (loginResult.Status == LoginStatus.LoggedIn)
 			{
-				CurrentOperation = UseCachedListOfProducts ? "Reading cached products..." : "Downloading list of products...";
+				CurrentOperation = UseCachedListOfProducts ? Properties.Resources.ReadingCachedProducts : Properties.Resources.DownloadingListOfProducts;
 			    _courseService.Cookies = loginResult.Cookies;
 
-                bool received = UseCachedListOfProducts ? await _courseService.GetCachedProductsAsync() : await _courseService.GetNoncachedProductsJsonAsync();
+                bool received = UseCachedListOfProducts ? await _courseService.ProcessCachedProductsAsync() : await _courseService.ProcessNoncachedProductsJsonAsync();
 				if (received)
 				{
-					Messenger.Default.Send(new NotificationMessage("CloseWindow"));
+				    File.WriteAllText(Properties.Settings.Default.FileNameForJsonOfCourses, _courseService.CachedProductsJson);
+                    Messenger.Default.Send(new NotificationMessage("CloseWindow"));
 				}
 				else
 				{
-					CurrentOperation = "Unable to receive products. Try later";
+					CurrentOperation = Properties.Resources.UnableToReceiveProducts;
 					LoginInProgress = false;
 					LoginButtonEnabled = true;
 				}
 			}
 			else
 			{
-				CurrentOperation = "Login failed";
+				CurrentOperation = Properties.Resources.LoginFailed;
 				LoginInProgress = false;
 				LoginButtonEnabled = true;
 			}
@@ -174,7 +176,7 @@ namespace VideoDownloader.App.ViewModel
 					case "UserName":
 						{
 							if (!_firstUserNameCheck && !ValidateUserName())
-								msg = "Name can't be empty.";
+								msg = Properties.Resources.NameCannotBeEmpty;
 							else
 							{
 								_firstUserNameCheck = false;

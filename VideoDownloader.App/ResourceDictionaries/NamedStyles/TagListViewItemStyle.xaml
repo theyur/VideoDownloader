@@ -1,7 +1,6 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:VideoDownloader.App.ResourceDictionaries.NamedStyles">
-    <Style TargetType="{x:Type ListViewItem}" x:Key="TagListViewItemStyle">
+﻿<ResourceDictionary x:Uid="ResourceDictionary_1" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Uid="Style_1" TargetType="{x:Type ListViewItem}" x:Key="TagListViewItemStyle">
 
         <Setter Property="SnapsToDevicePixels" Value="true"/>
         <Setter Property="Background" Value="AntiqueWhite"/>
@@ -24,13 +23,13 @@
         </Style.Triggers>
         <Style.Resources>
             <!--selected and focused-->
-            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFE5B622"/>
+            <SolidColorBrush x:Uid="SolidColorBrush_1" x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFE5B622"/>
 
             <!--selected and not focused-->
-            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="LightBlue" Opacity=".4"/>
+            <SolidColorBrush x:Uid="SolidColorBrush_2" x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="LightBlue" Opacity=".4"/>
 
-            <Style TargetType="Border">
-                <Setter Property="CornerRadius" Value="2"/>
+            <Style x:Uid="Style_2" TargetType="Border">
+                <Setter x:Uid="Setter_13" Property="CornerRadius" Value="2"/>
             </Style>
         </Style.Resources>
     </Style>

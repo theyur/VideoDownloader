@@ -19,6 +19,7 @@ namespace VideoDownloader.App.BL
         {
             _configProvider = configProvider;
         }
+
         public async Task<LoginResult> LoginAsync(string userName, string password)
         {
             var postData = BuildPostDataString(userName, password);
@@ -33,11 +34,11 @@ namespace VideoDownloader.App.BL
         private async Task<ResponseEx> TryLoginAsync(string postData)
         {
             HttpMethod httpMethod = HttpMethod.Post;
-            Uri urlToGo = new Uri("https://app.pluralsight.com/id/");
+            Uri urlToGo = new Uri(Properties.Settings.Default.FirstUrlForLogin);
             var httpHelper = new HttpHelper
             {
                 AcceptHeader = AcceptHeader.HtmlXml,
-                AcceptEncoding = "",
+                AcceptEncoding = string.Empty,
                 ContentType = ContentType.AppXWwwFormUrlencode,
                 Cookies = _cookies,
                 Referrer = urlToGo,

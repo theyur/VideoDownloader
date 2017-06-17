@@ -44,7 +44,8 @@ namespace VideoDownloader.App.ViewModel
 
         #region Properties
 
-        public IMessenger Messenger {
+        public IMessenger Messenger
+        {
             get { return base.MessengerInstance; }
         }
 
@@ -156,7 +157,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string CurrentUserAgent
         {
-            get { return _currentUserAgent ?? "Undefined"; }
+            get { return _currentUserAgent ?? Properties.Resources.Undefined; }
             set
             {
                 Set(() => CurrentUserAgent, ref _currentUserAgent, value);
@@ -183,7 +184,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string CoursesFilterText
         {
-            get { return _coursesFilterText ?? ""; }
+            get { return _coursesFilterText ?? string.Empty; }
             set
             {
                 if (Set(() => CoursesFilterText, ref _coursesFilterText, value))
@@ -191,14 +192,16 @@ namespace VideoDownloader.App.ViewModel
                     if (OnlyForSelectedTag)
                     {
                         CurrentDisplayedFilteredCourses =
-                    new ObservableCollection<CourseDescription>(CurrentDisplayedCourses
-                    .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
-                    .OrderByDescending(c => c.PublishedDate));
+                        new ObservableCollection<CourseDescription>(CurrentDisplayedCourses
+                        .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
+                        .OrderByDescending(c => c.PublishedDate));
                     }
                     else if (AllCourses.Any())
                     {
                         CurrentDisplayedFilteredCourses =
-                            new ObservableCollection<CourseDescription>(AllCourses.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
+                            new ObservableCollection<CourseDescription>(AllCourses
+                            .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
+                            .OrderByDescending(c => c.PublishedDate));
                     }
                 }
             }
@@ -350,8 +353,7 @@ namespace VideoDownloader.App.ViewModel
                 var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
                 foreach (var course in coursesToDownload)
                 {
-                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress,
-                        _cancellationToken.Token);
+                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
                 }
                 IsDownloading = false;
             }
@@ -367,7 +369,9 @@ namespace VideoDownloader.App.ViewModel
             if (CurrentDisplayedCourses.Any())
             {
                 CurrentDisplayedFilteredCourses =
-                    new ObservableCollection<CourseDescription>(CurrentDisplayedCourses.Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower())).OrderByDescending(c => c.PublishedDate));
+                    new ObservableCollection<CourseDescription>(CurrentDisplayedCourses
+                    .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
+                    .OrderByDescending(c => c.PublishedDate));
             }
 
             AnyCourseSelected = (NumberOfSelectedCourses > 0);

@@ -37,3 +37,5 @@ namespace VideoDownloader.App
 		}
 	}
 }
+
+// implement System.Windows.Forms.IWin32Window
