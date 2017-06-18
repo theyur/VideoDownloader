@@ -55,13 +55,14 @@
 			<ListView Grid.Row="2"
 				  Grid.Column="0"
 				  Grid.RowSpan="6"
-				  Margin="10,15,10,0"
+				  Margin="10,5,10,0"
 				  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
 				  ItemTemplate="{StaticResource TagListViewItemDataTemplate}"
                   ItemContainerStyle="{StaticResource TagListViewItemStyle}"
 				  ItemsSource="{Binding NumberOfCoursesForTag}"
 				  Style="{StaticResource TagListViewControlStyle}">
-			</ListView>
+
+            </ListView>
 
             <TextBox Tag="{x:Static res:Resources.Find}"
 					 Style="{StaticResource TextBoxWithDefaultTextStyle}"
@@ -69,10 +70,10 @@
 					 Grid.Row="1"
 					 Grid.Column="1"
 					 Margin="10,2,10,2"
-					 Grid.ColumnSpan="2"/>
+					 Grid.ColumnSpan="3"/>
             <CheckBox Content="{x:Static res:Resources.FindForSelectedTag}"
                       Grid.Row="1"
-                      Grid.Column="3"
+                      Grid.Column="4"
                       Grid.ColumnSpan="2"
                       VerticalAlignment="Center"
                       IsChecked="{Binding OnlyForSelectedTag}"></CheckBox>

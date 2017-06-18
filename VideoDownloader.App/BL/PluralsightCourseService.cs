@@ -184,44 +184,60 @@ namespace VideoDownloader.App.BL
         private async Task DownloadClip(Uri clipUrl, string fileNameWithoutExtension, int clipCounter, int partsNumber)
         {
             _token.ThrowIfCancellationRequested();
-
-            RemovePartiallyDownloadedFile(fileNameWithoutExtension);
-
-            var fileName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}";
-            _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
-
-            var httpHelper = new HttpHelper
+            Progress<FileDownloadingProgressArguments> fileDownloadingProgress = null;
+            try
             {
-                AcceptEncoding = string.Empty,
-                AcceptHeader = AcceptHeader.All,
-                ContentType = ContentType.Video,
-                Cookies = Cookies,
-                Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
-                UserAgent = _userAgent
-            };
+                RemovePartiallyDownloadedFile(fileNameWithoutExtension);
 
-            await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
+                var fileName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}";
+                _totalCourseDownloadingProgessRatio = (int) (((double) clipCounter) / partsNumber * 100);
 
-            _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
+                var httpHelper = new HttpHelper
+                {
+                    AcceptEncoding = string.Empty,
+                    AcceptHeader = AcceptHeader.All,
+                    ContentType = ContentType.Video,
+                    Cookies = Cookies,
+                    Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
+                    UserAgent = _userAgent
+                };
+
+                await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
+
+                _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
+                {
+                    CurrentAction = Properties.Resources.Downloading,
+                    ClipName = fileName,
+                    CourseProgress = _totalCourseDownloadingProgessRatio,
+                    ClipProgress = 0
+                });
+
+                fileDownloadingProgress = new Progress<FileDownloadingProgressArguments>();
+                fileDownloadingProgress.ProgressChanged += OnProgressChanged;
+
+                await httpHelper.DownloadWithProgressAsync(clipUrl,
+                    $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
+                    fileDownloadingProgress, _token);
+
+                _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
+
+                _timer.Enabled = true;
+                await Task.Delay(_timeout * 1000, _token);
+            }
+            catch (OperationCanceledException)
             {
-                CurrentAction = Properties.Resources.Downloading,
-                ClipName = fileName,
-                CourseProgress = _totalCourseDownloadingProgessRatio,
-                ClipProgress = 0
-            });
-
-            var fileDownloadingProgress = new Progress<FileDownloadingProgressArguments>();
-            fileDownloadingProgress.ProgressChanged += OnProgressChanged;
-
-            await httpHelper.DownloadWithProgressAsync(clipUrl, $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}", fileDownloadingProgress, _token);
-
-            _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
-
-            _timer.Enabled = true;
-            await Task.Delay(_timeout * 1000, _token);
-            _timer.Enabled = false;
-            _timeoutProgress.Report(0);
-            fileDownloadingProgress.ProgressChanged -= OnProgressChanged;
+                _timer.Elapsed -= OnTimerElapsed;
+                throw;
+            }
+            finally
+            {
+               _timer.Enabled = false;
+                _timeoutProgress.Report(0);
+                if (fileDownloadingProgress != null)
+                {
+                    fileDownloadingProgress.ProgressChanged -= OnProgressChanged;
+                }
+            }
         }
 
         private void OnProgressChanged(object sender, FileDownloadingProgressArguments e)
