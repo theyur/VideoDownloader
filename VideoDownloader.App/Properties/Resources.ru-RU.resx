@@ -216,4 +216,7 @@
   <data name="Yes" xml:space="preserve">
     <value>Да</value>
   </data>
+  <data name="Downloaded" xml:space="preserve">
+    <value>Загружен</value>
+  </data>
 </root>

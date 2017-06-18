@@ -97,6 +97,15 @@ namespace VideoDownloader.App.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Downloaded.
+        /// </summary>
+        public static string Downloaded {
+            get {
+                return ResourceManager.GetString("Downloaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Downloading.
         /// </summary>
         public static string Downloading {

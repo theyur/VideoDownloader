@@ -117,7 +117,7 @@ namespace VideoDownloader.App.BL
                     CourseProgress = 0,
                     ClipProgress = 0
                 };
-
+                _timer.Elapsed -= OnTimerElapsed;
                 _courseDownloadingProgress.Report(progressArgs);
                 if (_timer != null)
                 {
@@ -189,7 +189,6 @@ namespace VideoDownloader.App.BL
             {
                 RemovePartiallyDownloadedFile(fileNameWithoutExtension);
 
-                var fileName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}";
                 _totalCourseDownloadingProgessRatio = (int) (((double) clipCounter) / partsNumber * 100);
 
                 var httpHelper = new HttpHelper
@@ -207,7 +206,7 @@ namespace VideoDownloader.App.BL
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
                     CurrentAction = Properties.Resources.Downloading,
-                    ClipName = fileName,
+                    ClipName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}",
                     CourseProgress = _totalCourseDownloadingProgessRatio,
                     ClipProgress = 0
                 });
@@ -221,17 +220,21 @@ namespace VideoDownloader.App.BL
 
                 _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
 
+                _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
+                {
+                    CurrentAction = Properties.Resources.Downloaded,
+                    ClipName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
+                    CourseProgress = _totalCourseDownloadingProgessRatio,
+                    ClipProgress = 0
+                });
+
                 _timer.Enabled = true;
                 await Task.Delay(_timeout * 1000, _token);
+                _timer.Enabled = false;
             }
-            catch (OperationCanceledException)
-            {
-                _timer.Elapsed -= OnTimerElapsed;
-                throw;
-            }
+
             finally
             {
-               _timer.Enabled = false;
                 _timeoutProgress.Report(0);
                 if (fileDownloadingProgress != null)
                 {
