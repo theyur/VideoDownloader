@@ -21,7 +21,9 @@ namespace VideoDownloader.App.ViewModel
 			builder.RegisterType<PluralsightCourseService>().As<ICourseService>().SingleInstance();
             builder.RegisterType<PluralsightLoginService>().As<ILoginService>().SingleInstance();
             builder.RegisterType<FileConfigProfider>().As<IConfigProvider>().SingleInstance();
-			builder.RegisterType<PluralsightMainViewModel>().AsSelf();
+            builder.RegisterType<SubtitleService>().As<ISubtitleService>().SingleInstance();
+            builder.RegisterType<PluralsightMetadataService>().As<ICourseMetadataService>().SingleInstance();
+            builder.RegisterType<PluralsightMainViewModel>().AsSelf();
 			builder.RegisterType<LoginViewModel>().AsSelf();
 			builder.RegisterType<SettingsViewModel>().AsSelf();
 			var container = builder.Build();

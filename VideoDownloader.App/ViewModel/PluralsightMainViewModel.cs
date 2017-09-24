@@ -5,11 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json;
+using VideoDownloader.App.BL;
 using VideoDownloader.App.BL.Messages;
 using VideoDownloader.App.Contract;
 using VideoDownloader.App.Model;
+using VideoDownloader.App.Properties;
 
 namespace VideoDownloader.App.ViewModel
 {
@@ -25,6 +29,7 @@ namespace VideoDownloader.App.ViewModel
         private ObservableCollection<CourseDescription> _currentDisplayedFilteredCourses;
         private readonly IConfigProvider _configProvider;
         private readonly ICourseService _courseService;
+        private readonly ICourseMetadataService _courseMetadataService;
 
         private bool _isDownloading;
         private bool _anyCourseSelected;
@@ -114,7 +119,6 @@ namespace VideoDownloader.App.ViewModel
             }
 
         }
-
 
         public int DownloadingProgress
         {
@@ -247,7 +251,6 @@ namespace VideoDownloader.App.ViewModel
             }
         }
 
-
         #endregion
 
         #region Command
@@ -271,11 +274,12 @@ namespace VideoDownloader.App.ViewModel
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public PluralsightMainViewModel(ILoginService loginService, ICourseService courseService, IConfigProvider configProvider)
+        public PluralsightMainViewModel(ILoginService loginService, ICourseService courseService, ICourseMetadataService courseMetadataService, IConfigProvider configProvider)
         {
             _configProvider = configProvider;
             CurrentUserAgent = _configProvider.UserAgent;
             _courseService = courseService;
+            _courseMetadataService = courseMetadataService;
             NumberOfSelectedCourses = 0;
             AuthenticatedUser authenticatedUser = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatedUser>(loginService.LoginResultJson);
             Title = $"{authenticatedUser.CurrentUser.FirstName} {authenticatedUser.CurrentUser.LastName} ({authenticatedUser.CurrentUser.Email})";
@@ -353,9 +357,31 @@ namespace VideoDownloader.App.ViewModel
                 var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
                 foreach (var course in coursesToDownload)
                 {
-                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
+                    string tableOfContent = await _courseService.GetCourseTableOfContentAsync(course.Id);
+                    string destinationFolder = _configProvider.DownloadsPath;
+                    string validBaseCourseDirectory =
+                        $"{_courseService.GetBaseCourseDirectoryName(destinationFolder, course.Title)}";
+                    _courseMetadataService.WriteTableOfContent(validBaseCourseDirectory, tableOfContent);
+                    _courseMetadataService.WriteDescription(validBaseCourseDirectory, course.Description);
+                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress,
+                        _cancellationToken.Token);
+
+                    course.CheckedForDownloading = false;
+                    --NumberOfSelectedCourses;
                 }
                 IsDownloading = false;
+            }
+            catch (OperationCanceledException exc)
+            {
+                Messenger.Send(new ExceptionThrownMessage(Resources.YouCanceledDownloading));
+            }
+            catch (JsonSerializationException exc)
+            {
+                Messenger.Send(new ExceptionThrownMessage(exc.Message));
+            }
+            catch (JsonException exc)
+            {
+                Messenger.Send(new ExceptionThrownMessage(exc.Message));
             }
             catch (Exception exc)
             {

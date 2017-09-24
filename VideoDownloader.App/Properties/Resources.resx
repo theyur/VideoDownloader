@@ -184,7 +184,7 @@
     <value>Reading cached products</value>
   </data>
   <data name="ReleaseDate" xml:space="preserve">
-    <value>ReleaseDate</value>
+    <value>Release Date</value>
   </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
@@ -218,5 +218,14 @@
   </data>
   <data name="Downloaded" xml:space="preserve">
     <value>Downloaded</value>
+  </data>
+  <data name="YouCanceledDownloading" xml:space="preserve">
+    <value>The downloading has been canceled</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="TableOfContent" xml:space="preserve">
+    <value>Table of content</value>
   </data>
 </root>

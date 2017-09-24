@@ -19,7 +19,7 @@ namespace VideoDownloader.App.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -93,6 +93,15 @@ namespace VideoDownloader.App.Properties {
         public static string ClickToOpenInBrowser {
             get {
                 return ResourceManager.GetString("ClickToOpenInBrowser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string Description {
+            get {
+                return ResourceManager.GetString("Description", resourceCulture);
             }
         }
         
@@ -277,7 +286,7 @@ namespace VideoDownloader.App.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ReleaseDate.
+        ///   Looks up a localized string similar to Release Date.
         /// </summary>
         public static string ReleaseDate {
             get {
@@ -300,6 +309,15 @@ namespace VideoDownloader.App.Properties {
         public static string Subtitles {
             get {
                 return ResourceManager.GetString("Subtitles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table of content.
+        /// </summary>
+        public static string TableOfContent {
+            get {
+                return ResourceManager.GetString("TableOfContent", resourceCulture);
             }
         }
         
@@ -363,6 +381,15 @@ namespace VideoDownloader.App.Properties {
         public static string Yes {
             get {
                 return ResourceManager.GetString("Yes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The downloading has been canceled.
+        /// </summary>
+        public static string YouCanceledDownloading {
+            get {
+                return ResourceManager.GetString("YouCanceledDownloading", resourceCulture);
             }
         }
     }

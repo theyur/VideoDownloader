@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Windows.Forms.PropertyGridInternal;
 using VideoDownloader.App.BL.Exceptions;
 using VideoDownloader.App.Contract;
 using VideoDownloader.App.Model;
@@ -22,6 +23,7 @@ namespace VideoDownloader.App.BL
         private readonly Timer _timer = new Timer(1000);
 
         private readonly IConfigProvider _configProvider;
+        private readonly ISubtitleService _subtitleService;
 
         private readonly string _userAgent;
         private CancellationToken _token;
@@ -36,9 +38,10 @@ namespace VideoDownloader.App.BL
 
         #region Constructors
 
-        public PluralsightCourseService(IConfigProvider configProvider)
+        public PluralsightCourseService(IConfigProvider configProvider, ISubtitleService subtitleService)
         {
             _configProvider = configProvider;
+            _subtitleService = subtitleService;
             _userAgent = _configProvider.UserAgent;
         }
 
@@ -63,28 +66,35 @@ namespace VideoDownloader.App.BL
             }
         }
 
-        string GetValidPath(string path)
-        {
-            var regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            var r = new Regex($"[{Regex.Escape(regexSearch)}]");
-            path = r.Replace(path, string.Empty);
-            return path;
-        }
-
         public async Task DownloadAsync(string productId,
-            IProgress<CourseDownloadingProgressArguments> downloadingProgress,
-            IProgress<int> timeoutProgress,
-            CancellationToken token)
+          IProgress<CourseDownloadingProgressArguments> downloadingProgress,
+          IProgress<int> timeoutProgress,
+          CancellationToken token)
         {
             _timeoutProgress = timeoutProgress;
             _courseDownloadingProgress = downloadingProgress;
-
             _token = token;
+
             var rpcUri = Properties.Settings.Default.RpcUri;
-
             RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
-
             await DownloadCourse(rpcData);
+        }
+
+        public async Task<string> GetCourseTableOfContentAsync(string productId)
+        {
+            var rpcUri = Properties.Settings.Default.RpcUri;
+            StringBuilder tableOfContent = new StringBuilder();
+            RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
+            foreach (var module in rpcData.Payload.Course.Modules)
+            {
+                tableOfContent.AppendLine($"{module.Title} {module.FormattedDuration}");
+                foreach (var clip in module.Clips)
+                {
+                    tableOfContent.AppendLine($" {clip.Title}  {clip.FormattedDuration}");
+                }
+                tableOfContent.AppendLine();
+            }
+            return tableOfContent.ToString();
         }
 
         private async Task DownloadCourse(RpcData rpcData)
@@ -94,7 +104,7 @@ namespace VideoDownloader.App.BL
             var course = rpcData.Payload.Course;
             _timer.Elapsed += OnTimerElapsed;
 
-            var courseDirectory = CreateCourseDirectory(destinationFolder, course.Title);
+            var courseDirectory = CreateCourseDirectory(GetBaseCourseDirectoryName(destinationFolder, course.Title));
             try
             {
                 var moduleCounter = 0;
@@ -103,11 +113,6 @@ namespace VideoDownloader.App.BL
                     ++moduleCounter;
                     await DownloadModule(rpcData, courseDirectory, moduleCounter, module);
                 }
-            }
-
-            catch (OperationCanceledException /*ex*/)
-            {
-
             }
             finally
             {
@@ -161,9 +166,10 @@ namespace VideoDownloader.App.BL
                 var postJson = BuildViewclipData(rpcData, moduleCounter, clipCounter);
 
                 var fileName = GetFullFileNameWithoutExtension(clipCounter, moduleDirectory, clip);
+
                 if (!File.Exists($"{fileName}.{Properties.Settings.Default.ClipExtensionMp4}"))
                 {
-                    var viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
+                    ResponseEx viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
                         new Uri(Properties.Settings.Default.ViewClipUrl),
                         postJson,
                         _token);
@@ -172,13 +178,52 @@ namespace VideoDownloader.App.BL
                         throw new UnauthorizedException(Properties.Resources.CheckYourSubscription);
                     }
 
+                    using (var aaa = new StreamWriter("D:\\aaa.txt", true))
+                    {
+                        aaa.WriteLine(viewclipResonse.Content);
+                    }
                     var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
+
+                    if (clipFile.Captions != null)
+                    {
+                        IList<SrtRecord> formattedSubtitles = GetFormattedSubtitles(clipFile.Captions, clip.Duration);
+                        _subtitleService.Write($"{fileName}.{Properties.Settings.Default.SubtitilesExtensionMp4}", formattedSubtitles);
+                    }
+
                     await DownloadClip(new Uri(clipFile.Urls[1].Url),
-                        fileName,
-                        clipCounter,
-                        rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
+                      fileName,
+                      clipCounter,
+                      rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
                 }
+
+
             }
+        }
+
+        private List<SrtRecord> GetFormattedSubtitles(Caption[] captions, int totalDuration)
+        {
+            List<SrtRecord> srtRecords = new List<SrtRecord>();
+
+            for (int i = 0; i < captions.Count() - 1; ++i)
+            {
+                SrtRecord srtRecord = new SrtRecord
+                {
+                    FromTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i].DisplayTimeOffset)),
+                    ToTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i + 1].DisplayTimeOffset) - 0.1),
+                    Text = (captions[i].Text)
+                };
+                srtRecords.Add(srtRecord);
+            }
+
+            SrtRecord finalSrtRecord = new SrtRecord
+            {
+                FromTimeSpan = TimeSpan.FromSeconds(Double.Parse(captions.Last().DisplayTimeOffset)),
+                ToTimeSpan = TimeSpan.FromSeconds(Convert.ToDouble(totalDuration) - 0.1),
+                Text = captions.Last().Text
+            };
+
+            srtRecords.Add(finalSrtRecord);
+            return srtRecords;
         }
 
         private async Task DownloadClip(Uri clipUrl, string fileNameWithoutExtension, int clipCounter, int partsNumber)
@@ -189,8 +234,6 @@ namespace VideoDownloader.App.BL
             {
                 RemovePartiallyDownloadedFile(fileNameWithoutExtension);
 
-                _totalCourseDownloadingProgessRatio = (int) (((double) clipCounter) / partsNumber * 100);
-
                 var httpHelper = new HttpHelper
                 {
                     AcceptEncoding = string.Empty,
@@ -200,9 +243,9 @@ namespace VideoDownloader.App.BL
                     Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
                     UserAgent = _userAgent
                 };
-
                 await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
 
+                _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
                     CurrentAction = Properties.Resources.Downloading,
@@ -218,8 +261,6 @@ namespace VideoDownloader.App.BL
                     $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
                     fileDownloadingProgress, _token);
 
-                _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
-
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
                     CurrentAction = Properties.Resources.Downloaded,
@@ -229,6 +270,7 @@ namespace VideoDownloader.App.BL
                 });
 
                 _timer.Enabled = true;
+                _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
                 await Task.Delay(_timeout * 1000, _token);
                 _timer.Enabled = false;
             }
@@ -258,29 +300,23 @@ namespace VideoDownloader.App.BL
 
         private static void RemovePartiallyDownloadedFile(string fileNameWithoutExtension)
         {
-            if (File.Exists($"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}"))
-            {
-                File.Delete($"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}");
-            }
+            File.Delete($"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}");
         }
 
         private string GetFullFileNameWithoutExtension(int clipCounter, string moduleDirectory, Clip clip)
         {
-            return $@"{moduleDirectory}\{clipCounter:00}.{GetValidPath(clip.Title)}";
+            return $@"{moduleDirectory}\{clipCounter:00}.{Utils.GetValidPath(clip.Title)}";
         }
 
         private string CreateModuleDirectory(string courseDirectory, int moduleCounter, string moduleTitle)
         {
-            var moduleDirectory = $@"{courseDirectory}\{moduleCounter:00}.{GetValidPath(moduleTitle)}";
-            Directory.CreateDirectory(moduleDirectory);
-            return moduleDirectory;
+            var moduleDirectory = $@"{courseDirectory}\{moduleCounter:00}.{Utils.GetValidPath(moduleTitle)}";
+            return Directory.CreateDirectory(moduleDirectory).FullName;
         }
 
-        private string CreateCourseDirectory(string destinationFolder, string courseTitle)
+        private string CreateCourseDirectory(string destinationFolder)
         {
-            var courseDirectory = $@"{destinationFolder}\{GetValidPath(courseTitle)}";
-            Directory.CreateDirectory(courseDirectory);
-            return courseDirectory;
+            return Directory.CreateDirectory(destinationFolder).FullName;
         }
 
         private string BuildViewclipData(RpcData rpcData, int moduleCounter, int clipCounter)
@@ -295,7 +331,7 @@ namespace VideoDownloader.App.BL
                 Locale = Properties.Settings.Default.EnglishLocale,
                 ModuleName = module.Name,
                 MediaType = Properties.Settings.Default.ClipExtensionMp4,
-                Quality = rpcData.Payload.Course.SupportsWideScreenVideoFormats ? "1280x720" : "1024x768"
+                Quality = rpcData.Payload.Course.SupportsWideScreenVideoFormats ? Properties.Settings.Default.Resolution1280x720 : Properties.Settings.Default.Resolution1024x768
             };
             return Newtonsoft.Json.JsonConvert.SerializeObject(viewclipData);
         }
@@ -315,6 +351,11 @@ namespace VideoDownloader.App.BL
             var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, _token);
 
             return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
+        }
+
+        public string GetBaseCourseDirectoryName(string destinationDirectory, string courseName)
+        {
+            return $"{destinationDirectory}\\Pluralsight - {Utils.GetValidPath(courseName)}";
         }
 
         public async Task<bool> ProcessNoncachedProductsJsonAsync()
@@ -388,7 +429,7 @@ namespace VideoDownloader.App.BL
                 {
                     await ProcessNoncachedProductsJsonAsync();
                 }
-                
+
                 return !string.IsNullOrEmpty(CachedProductsJson);
             }
             catch (Exception)
@@ -420,7 +461,6 @@ namespace VideoDownloader.App.BL
                 }
             }
             _disposed = true;
-            
         }
     }
 }

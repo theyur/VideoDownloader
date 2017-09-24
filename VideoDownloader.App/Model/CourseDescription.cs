@@ -1,9 +1,10 @@
 ﻿using System;
 using Newtonsoft.Json;
+using GalaSoft.MvvmLight;
 
 namespace VideoDownloader.App.Model
 {
-	public class CourseDescription
+	public class CourseDescription: ObservableObject
 	{
         [JsonProperty("authors")]
         public Author[] Authors { get; set; }
@@ -68,6 +69,10 @@ namespace VideoDownloader.App.Model
 	    [JsonProperty("categories")]
 	    public string Categories { get; set; }
 
-        public bool CheckedForDownloading { get; set; }
+        private bool _checkedForDownloading;
+        public bool CheckedForDownloading {
+            get { return _checkedForDownloading; }
+            set { Set(() => CheckedForDownloading, ref _checkedForDownloading, value); }
+        }
 	}
 }

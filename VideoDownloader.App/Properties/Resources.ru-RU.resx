@@ -219,4 +219,13 @@
   <data name="Downloaded" xml:space="preserve">
     <value>Загружен</value>
   </data>
+  <data name="Description" xml:space="preserve">
+    <value>Описание</value>
+  </data>
+  <data name="TableOfContent" xml:space="preserve">
+    <value>Содержание</value>
+  </data>
+  <data name="YouCanceledDownloading" xml:space="preserve">
+    <value>Загрузка отменена пользователем</value>
+  </data>
 </root>

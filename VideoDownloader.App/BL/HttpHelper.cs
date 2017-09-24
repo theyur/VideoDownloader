@@ -116,7 +116,6 @@ namespace VideoDownloader.App.BL
         {
             HttpRequestMessage requestMessage = new HttpRequestMessage { Method = method };
 
-            // uncomment if you want to recieve gzipped response
             if (AcceptEncoding != string.Empty)
             {
                 requestMessage.Headers.AcceptEncoding.TryParseAdd(AcceptEncoding);

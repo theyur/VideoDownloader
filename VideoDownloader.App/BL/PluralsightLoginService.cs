@@ -13,6 +13,7 @@ namespace VideoDownloader.App.BL
     {
         private string _cookies;
         private readonly IConfigProvider _configProvider;
+
         public string LoginResultJson { get; set; }
 
         public PluralsightLoginService(IConfigProvider configProvider)
@@ -23,8 +24,6 @@ namespace VideoDownloader.App.BL
         public async Task<LoginResult> LoginAsync(string userName, string password)
         {
             var postData = BuildPostDataString(userName, password);
-            
-           
             var loginResponse = await TryLoginAsync(postData);
             var loginResult = GetLoginResult(loginResponse);
             LoginResultJson = loginResult.DataJson;
@@ -63,8 +62,7 @@ namespace VideoDownloader.App.BL
         private LoginResult GetLoginResult(ResponseEx loginResponse)
         {
             LoginResult loginResult = new LoginResult();
-            string userData;
-            if (IsLoggedIn(loginResponse.Content, out userData))
+            if (IsLoggedIn(loginResponse.Content, out var userData))
             {
                 loginResult.Status = LoginStatus.LoggedIn;
                 loginResult.DataJson = userData;

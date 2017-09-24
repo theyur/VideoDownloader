@@ -26,7 +26,6 @@ namespace VideoDownloader.App.AttachedProperty
             if (!string.IsNullOrEmpty((string) args.NewValue))
             {
                 hyperlink.NavigateUri = new Uri(string.Format((string) args.NewValue, hyperlink.NavigateUri));
-
                 hyperlink.RequestNavigate -= Hyperlink_RequestNavigate;
                 hyperlink.RequestNavigate += Hyperlink_RequestNavigate;
             }
