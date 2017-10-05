@@ -45,22 +45,22 @@ namespace VideoDownloader.App.BL
 				Dictionary<string, object> values = JsonConvert.DeserializeObject<Dictionary<string, object>>(readSetting);
 				MinTimeout = Convert.ToInt32(values["mintimeout"]);
 				MaxTimeout = Convert.ToInt32(values["maxtimeout"]);
-                DownloadsPath = values["downloadspath"].ToString();
+                DownloadsPath = Directory.Exists(values["downloadspath"].ToString()) ? values["downloadspath"].ToString() : Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 _userAgents = JsonConvert.DeserializeObject<List<string>>(Convert.ToString(values["userAgents"]));
 			}
 			else
 			{
                 _userAgents = new List<string>(_defaultUserAgents);
-				Save();
 			}
 
 			if (UserAgent == null)
 			{
 			    UserAgent = GetRandomUserAgent();
 			}
-		}
+		    Save();
+        }
 
-		public void Save()
+        public void Save()
 		{
 			try
 			{

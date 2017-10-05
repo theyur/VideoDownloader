@@ -13,12 +13,14 @@ namespace VideoDownloader.App.BL
     {
         public void WriteTableOfContent(string fileFullPath, string content)
         {
+            Directory.CreateDirectory(fileFullPath);
             string tableOfCOntentFilePath = $"{fileFullPath}\\{Resources.TableOfContent}.txt";
             File.WriteAllText(tableOfCOntentFilePath, content);
         }
 
         public void WriteDescription(string fileFullPath, string content)
         {
+            Directory.CreateDirectory(fileFullPath);
             string tableOfCOntentFilePath = $"{fileFullPath}\\{Resources.Description}.txt";
             File.WriteAllText(tableOfCOntentFilePath, content);
         }

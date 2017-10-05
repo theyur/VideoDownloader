@@ -357,14 +357,13 @@ namespace VideoDownloader.App.ViewModel
                 var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
                 foreach (var course in coursesToDownload)
                 {
-                    string tableOfContent = await _courseService.GetCourseTableOfContentAsync(course.Id);
+                    string tableOfContent = await _courseService.GetCourseTableOfContentAsync(course.Id, _cancellationToken.Token);
                     string destinationFolder = _configProvider.DownloadsPath;
-                    string validBaseCourseDirectory =
-                        $"{_courseService.GetBaseCourseDirectoryName(destinationFolder, course.Title)}";
+                    string validBaseCourseDirectory = $"{_courseService.GetBaseCourseDirectoryName(destinationFolder, course.Title)}";
+
                     _courseMetadataService.WriteTableOfContent(validBaseCourseDirectory, tableOfContent);
                     _courseMetadataService.WriteDescription(validBaseCourseDirectory, course.Description);
-                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress,
-                        _cancellationToken.Token);
+                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
 
                     course.CheckedForDownloading = false;
                     --NumberOfSelectedCourses;

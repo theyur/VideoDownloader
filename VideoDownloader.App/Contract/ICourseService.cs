@@ -21,7 +21,7 @@ namespace VideoDownloader.App.Contract
 
 	    Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
 
-        Task<string> GetCourseTableOfContentAsync(string productId);
+        Task<string> GetCourseTableOfContentAsync(string productId, CancellationToken token);
 
         Task<List<CourseDescription>> GetToolCourses(string toolName);
 

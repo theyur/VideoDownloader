@@ -76,15 +76,15 @@ namespace VideoDownloader.App.BL
             _token = token;
 
             var rpcUri = Properties.Settings.Default.RpcUri;
-            RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
+            RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId, _token);
             await DownloadCourse(rpcData);
         }
 
-        public async Task<string> GetCourseTableOfContentAsync(string productId)
+        public async Task<string> GetCourseTableOfContentAsync(string productId, CancellationToken token)
         {
             var rpcUri = Properties.Settings.Default.RpcUri;
             StringBuilder tableOfContent = new StringBuilder();
-            RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId);
+            RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId, token);
             foreach (var module in rpcData.Payload.Course.Modules)
             {
                 tableOfContent.AppendLine($"{module.Title} {module.FormattedDuration}");
@@ -178,10 +178,6 @@ namespace VideoDownloader.App.BL
                         throw new UnauthorizedException(Properties.Resources.CheckYourSubscription);
                     }
 
-                    using (var aaa = new StreamWriter("D:\\aaa.txt", true))
-                    {
-                        aaa.WriteLine(viewclipResonse.Content);
-                    }
                     var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
 
                     if (clipFile.Captions != null)
@@ -195,8 +191,6 @@ namespace VideoDownloader.App.BL
                       clipCounter,
                       rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
                 }
-
-
             }
         }
 
@@ -336,7 +330,7 @@ namespace VideoDownloader.App.BL
             return Newtonsoft.Json.JsonConvert.SerializeObject(viewclipData);
         }
 
-        private async Task<RpcData> GetDeserialisedRpcData(string rpcUri, string productId)
+        private async Task<RpcData> GetDeserialisedRpcData(string rpcUri, string productId, CancellationToken token)
         {
             string rpcJson = $"{{\"fn\":\"bootstrapPlayer\", \"payload\":{{\"courseId\":\"{productId}\"}} }}";
             var httpHelper = new HttpHelper
@@ -348,7 +342,7 @@ namespace VideoDownloader.App.BL
                 Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
                 UserAgent = _userAgent
             };
-            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, _token);
+            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, token);
 
             return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
         }
