@@ -197,13 +197,14 @@ namespace VideoDownloader.App.BL
         private List<SrtRecord> GetFormattedSubtitles(Caption[] captions, int totalDuration)
         {
             List<SrtRecord> srtRecords = new List<SrtRecord>();
+            CultureInfo culture = new CultureInfo("us");
 
             for (int i = 0; i < captions.Count() - 1; ++i)
             {
                 SrtRecord srtRecord = new SrtRecord
                 {
-                    FromTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i].DisplayTimeOffset)),
-                    ToTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i + 1].DisplayTimeOffset) - 0.1),
+                    FromTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i].DisplayTimeOffset, culture)),
+                    ToTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i + 1].DisplayTimeOffset, culture) - 0.1),
                     Text = (captions[i].Text)
                 };
                 srtRecords.Add(srtRecord);
@@ -211,7 +212,7 @@ namespace VideoDownloader.App.BL
 
             SrtRecord finalSrtRecord = new SrtRecord
             {
-                FromTimeSpan = TimeSpan.FromSeconds(Double.Parse(captions.Last().DisplayTimeOffset)),
+                FromTimeSpan = TimeSpan.FromSeconds(Double.Parse(captions.Last().DisplayTimeOffset, culture)),
                 ToTimeSpan = TimeSpan.FromSeconds(Convert.ToDouble(totalDuration) - 0.1),
                 Text = captions.Last().Text
             };
