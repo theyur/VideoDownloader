@@ -197,7 +197,7 @@ namespace VideoDownloader.App.BL
         private List<SrtRecord> GetFormattedSubtitles(Caption[] captions, int totalDuration)
         {
             List<SrtRecord> srtRecords = new List<SrtRecord>();
-            CultureInfo culture = new CultureInfo("us");
+            System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("us");
 
             for (int i = 0; i < captions.Count() - 1; ++i)
             {
