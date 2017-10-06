@@ -204,7 +204,7 @@ namespace VideoDownloader.App.BL
                 SrtRecord srtRecord = new SrtRecord
                 {
                     FromTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i].DisplayTimeOffset, culture)),
-                    ToTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i + 1].DisplayTimeOffset, culture) - 0.1),
+                    ToTimeSpan = TimeSpan.FromSeconds(double.Parse(captions[i + 1].DisplayTimeOffset, culture)),
                     Text = (captions[i].Text)
                 };
                 srtRecords.Add(srtRecord);
@@ -213,7 +213,7 @@ namespace VideoDownloader.App.BL
             SrtRecord finalSrtRecord = new SrtRecord
             {
                 FromTimeSpan = TimeSpan.FromSeconds(Double.Parse(captions.Last().DisplayTimeOffset, culture)),
-                ToTimeSpan = TimeSpan.FromSeconds(Convert.ToDouble(totalDuration) - 0.1),
+                ToTimeSpan = TimeSpan.FromSeconds(Convert.ToDouble(totalDuration)),
                 Text = captions.Last().Text
             };
 
