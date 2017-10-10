@@ -19,7 +19,7 @@ namespace VideoDownloader.App.BL
                 foreach (var record in subtitleRecords)
                 {
                     sw.WriteLine(index);
-                    sw.WriteLine($"{record.FromTimeSpan:hh\\:mm\\:ss\\.FFF} --> {record.ToTimeSpan:hh\\:mm\\:ss\\.FFF}");
+                    sw.WriteLine($"{record.FromTimeSpan.ToString("hh':'mm':'ss':'fff")} --> {record.ToTimeSpan.ToString("hh':'mm':'ss':'fff")}");
                     sw.WriteLine(record.Text);
                     sw.WriteLine();
                     ++index;
