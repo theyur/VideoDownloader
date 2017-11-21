@@ -163,7 +163,7 @@ namespace VideoDownloader.App.BL
             foreach (var clip in module.Clips)
             {
                 ++clipCounter;
-                var postJson = BuildViewclipData(rpcData, moduleCounter, clipCounter);
+                var postJson = BuildViewclipPostDataJson(rpcData, moduleCounter, clipCounter);
 
                 var fileName = GetFullFileNameWithoutExtension(clipCounter, moduleDirectory, clip);
 
@@ -173,6 +173,7 @@ namespace VideoDownloader.App.BL
                         new Uri(Properties.Settings.Default.ViewClipUrl),
                         postJson,
                         _token);
+
                     if (viewclipResonse.Content == "Unauthorized")
                     {
                         throw new UnauthorizedException(Properties.Resources.CheckYourSubscription);
@@ -180,9 +181,12 @@ namespace VideoDownloader.App.BL
 
                     var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
 
-                    if (clipFile.Captions != null)
+                    if (rpcData.Payload.Course.CourseHasCaptions)
                     {
-                        IList<SrtRecord> formattedSubtitles = GetFormattedSubtitles(clipFile.Captions, clip.Duration);
+                        
+                        string unformattedSubtitlesJson = await _subtitleService.DownloadAsync(httpHelper, module.Author, clipCounter - 1, module.Name, _token);
+                        Caption[] unformattedSubtitles = Newtonsoft.Json.JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson);
+                        IList<SrtRecord> formattedSubtitles = GetFormattedSubtitles(unformattedSubtitles, clip.Duration);
                         _subtitleService.Write($"{fileName}.{Properties.Settings.Default.SubtitilesExtensionMp4}", formattedSubtitles);
                     }
 
@@ -314,10 +318,10 @@ namespace VideoDownloader.App.BL
             return Directory.CreateDirectory(destinationFolder).FullName;
         }
 
-        private string BuildViewclipData(RpcData rpcData, int moduleCounter, int clipCounter)
+        private string BuildViewclipPostDataJson(RpcData rpcData, int moduleCounter, int clipCounter)
         {
             Module module = rpcData.Payload.Course.Modules[moduleCounter - 1];
-            ViewclipData viewclipData = new ViewclipData()
+            ViewclipPostData viewclipData = new ViewclipPostData()
             {
                 Author = module.Author,
                 IncludeCaptions = rpcData.Payload.Course.CourseHasCaptions,

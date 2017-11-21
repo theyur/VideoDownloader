@@ -149,5 +149,14 @@ namespace VideoDownloader.App.Properties {
                 return ((string)(this["Resolution1024x768"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://app.pluralsight.com/player/retrieve-captions")]
+        public string SubtitlesUrl {
+            get {
+                return ((string)(this["SubtitlesUrl"]));
+            }
+        }
     }
 }
