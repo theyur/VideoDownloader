@@ -6,25 +6,25 @@ using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.Contract
 {
-	public interface ICourseService
-	{
+    public interface ICourseService
+    {
 
-		Task<bool> ProcessNoncachedProductsJsonAsync();
+        Task<bool> ProcessNoncachedProductsJsonAsync();
 
-	    Task<bool> ProcessCachedProductsAsync();
+        Task<bool> ProcessCachedProductsAsync();
 
         string CachedProductsJson { get; }
 
-	    string Cookies { get; set; }
+        string Cookies { get; set; }
 
-	    Dictionary<string, List<CourseDescription>> CoursesByToolName { get; set; }
+        Dictionary<string, List<CourseDescription>> CoursesByToolName { get; set; }
 
-	    Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
+        Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
 
         Task<string> GetCourseTableOfContentAsync(string productId, CancellationToken token);
 
         Task<List<CourseDescription>> GetToolCourses(string toolName);
 
         string GetBaseCourseDirectoryName(string destinationDirectory, string courseName);
-	}
+    }
 }

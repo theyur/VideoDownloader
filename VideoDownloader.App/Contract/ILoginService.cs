@@ -4,7 +4,7 @@ namespace VideoDownloader.App.Contract
 {
     public interface ILoginService
     {
-		Task<LoginResult> LoginAsync(string userName, string password);
+        Task<LoginResult> LoginAsync(string userName, string password);
 
         string LoginResultJson { get; set; }
 

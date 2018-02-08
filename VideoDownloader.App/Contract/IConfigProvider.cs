@@ -1,15 +1,15 @@
 ﻿namespace VideoDownloader.App.Contract
 {
-	public interface IConfigProvider
-	{
-		int MinTimeout { get; set; }
+    public interface IConfigProvider
+    {
+        int MinTimeout { get; set; }
 
-		string UserAgent { get; }
+        string UserAgent { get; }
 
-		int MaxTimeout{get;set;}
+        int MaxTimeout{get;set;}
 
-		string DownloadsPath {get;set;}
+        string DownloadsPath {get;set;}
 
-		void Save();
-	}
+        void Save();
+    }
 }

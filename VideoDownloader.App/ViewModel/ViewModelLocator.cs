@@ -16,29 +16,29 @@ namespace VideoDownloader.App.ViewModel
         /// </summary>
         public ViewModelLocator()
         {
-			var builder = new ContainerBuilder();
+            var builder = new ContainerBuilder();
 
-			builder.RegisterType<PluralsightCourseService>().As<ICourseService>().SingleInstance();
+            builder.RegisterType<PluralsightCourseService>().As<ICourseService>().SingleInstance();
             builder.RegisterType<PluralsightLoginService>().As<ILoginService>().SingleInstance();
             builder.RegisterType<FileConfigProfider>().As<IConfigProvider>().SingleInstance();
             builder.RegisterType<SubtitleService>().As<ISubtitleService>().SingleInstance();
             builder.RegisterType<PluralsightMetadataService>().As<ICourseMetadataService>().SingleInstance();
             builder.RegisterType<PluralsightMainViewModel>().AsSelf();
-			builder.RegisterType<LoginViewModel>().AsSelf();
-			builder.RegisterType<SettingsViewModel>().AsSelf();
-			var container = builder.Build();
+            builder.RegisterType<LoginViewModel>().AsSelf();
+            builder.RegisterType<SettingsViewModel>().AsSelf();
+            var container = builder.Build();
 
-			ServiceLocator.SetLocatorProvider(() => new AutofacServiceLocator(container));
-			
-		}
+            ServiceLocator.SetLocatorProvider(() => new AutofacServiceLocator(container));
+            
+        }
 
         public PluralsightMainViewModel MainVm => ServiceLocator.Current.GetInstance<PluralsightMainViewModel>();
 
-	    public LoginViewModel LoginVm => ServiceLocator.Current.GetInstance<LoginViewModel>();
+        public LoginViewModel LoginVm => ServiceLocator.Current.GetInstance<LoginViewModel>();
 
-	    public SettingsViewModel SettingsVm => ServiceLocator.Current.GetInstance<SettingsViewModel>();
+        public SettingsViewModel SettingsVm => ServiceLocator.Current.GetInstance<SettingsViewModel>();
 
-	    public static void Cleanup()
+        public static void Cleanup()
         {
             // TODO Clear the ViewModels
         }

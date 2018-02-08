@@ -4,8 +4,8 @@ using GalaSoft.MvvmLight;
 
 namespace VideoDownloader.App.Model
 {
-	public class CourseDescription: ObservableObject
-	{
+    public class CourseDescription: ObservableObject
+    {
         [JsonProperty("authors")]
         public Author[] Authors { get; set; }
 
@@ -15,8 +15,8 @@ namespace VideoDownloader.App.Model
         [JsonProperty("description")]
         public string Description { get; set; }
 
-	    [JsonProperty("courseName")]
-	    public string CourseName { get; set; }
+        [JsonProperty("courseName")]
+        public string CourseName { get; set; }
 
         [JsonProperty("duration")]
         public string Duration { get; set; }
@@ -66,13 +66,13 @@ namespace VideoDownloader.App.Model
         [JsonProperty("keywords")]
         public string Keywords { get; set; }
 
-	    [JsonProperty("categories")]
-	    public string Categories { get; set; }
+        [JsonProperty("categories")]
+        public string Categories { get; set; }
 
         private bool _checkedForDownloading;
         public bool CheckedForDownloading {
             get { return _checkedForDownloading; }
             set { Set(() => CheckedForDownloading, ref _checkedForDownloading, value); }
         }
-	}
+    }
 }
