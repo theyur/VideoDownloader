@@ -1,7 +1,7 @@
 using Autofac;
-using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 using VideoDownloader.App.BL;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 
 namespace VideoDownloader.App.ViewModel
 {

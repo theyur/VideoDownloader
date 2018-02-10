@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Data;
 
@@ -17,6 +18,7 @@ namespace VideoDownloader.App.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
+            Debug.Assert(value != null, nameof(value) + " != null");
             Visibility visibility = (Visibility)value;
             return visibility == Visibility.Visible;
         }

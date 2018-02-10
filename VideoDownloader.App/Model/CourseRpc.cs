@@ -9,9 +9,7 @@ namespace VideoDownloader.App.Model
         public Module[] Modules { get; set; }
         public bool CourseHasCaptions { get; set; }
         public bool SupportsWideScreenVideoFormats { get; set; }
-
         public dynamic[] TranslationLanguages { get; set; }
-
         public DateTime Timestamp { get; set; }
     }
 }

@@ -3,7 +3,7 @@ using GalaSoft.MvvmLight.CommandWpf;
 using GalaSoft.MvvmLight.Messaging;
 using System;
 using System.Windows.Forms;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 
 namespace VideoDownloader.App.ViewModel
 {
@@ -25,11 +25,11 @@ namespace VideoDownloader.App.ViewModel
 
         public RelayCommand CancelCommand { get; set; }
 
-        private IConfigProvider _configProvider;
+        private readonly IConfigProvider _configProvider;
 
         public int MinTimeout
         {
-            get { return _minTimeout; }
+            get => _minTimeout;
             set
             {
                 Set(() => MinTimeout, ref _minTimeout, value);
@@ -38,7 +38,7 @@ namespace VideoDownloader.App.ViewModel
 
         public int MaxTimeout
         {
-            get { return _maxTimeout; }
+            get => _maxTimeout;
             set
             {
                 Set(() => MaxTimeout, ref _maxTimeout, value);
@@ -47,7 +47,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string DownloadsPath
         {
-            get { return _downloadsPath; }
+            get => _downloadsPath;
             set
             {
                 Set(() => DownloadsPath, ref _downloadsPath, value);

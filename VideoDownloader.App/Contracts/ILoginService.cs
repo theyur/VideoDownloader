@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace VideoDownloader.App.Contract
+namespace VideoDownloader.App.Contracts
 {
     public interface ILoginService
     {

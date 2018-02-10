@@ -7,9 +7,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using System.Windows.Forms.PropertyGridInternal;
 using VideoDownloader.App.BL.Exceptions;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 using VideoDownloader.App.Model;
 using Timer = System.Timers.Timer;
 
@@ -20,7 +19,7 @@ namespace VideoDownloader.App.BL
         #region Fields
 
         private readonly object _syncObj = new object();
-        private readonly Timer _timer = new Timer(1000);
+        private readonly Timer _timeoutBetweenClipDownloadingTimer = new Timer(1000);
 
         private readonly IConfigProvider _configProvider;
         private readonly ISubtitleService _subtitleService;
@@ -102,7 +101,7 @@ namespace VideoDownloader.App.BL
             string destinationFolder = _configProvider.DownloadsPath;
 
             var course = rpcData.Payload.Course;
-            _timer.Elapsed += OnTimerElapsed;
+            _timeoutBetweenClipDownloadingTimer.Elapsed += OnTimerElapsed;
 
             var courseDirectory = CreateCourseDirectory(GetBaseCourseDirectoryName(destinationFolder, course.Title));
             try
@@ -122,11 +121,11 @@ namespace VideoDownloader.App.BL
                     CourseProgress = 0,
                     ClipProgress = 0
                 };
-                _timer.Elapsed -= OnTimerElapsed;
+                _timeoutBetweenClipDownloadingTimer.Elapsed -= OnTimerElapsed;
                 _courseDownloadingProgress.Report(progressArgs);
-                if (_timer != null)
+                if (_timeoutBetweenClipDownloadingTimer != null)
                 {
-                    _timer.Enabled = false;
+                    _timeoutBetweenClipDownloadingTimer.Enabled = false;
                 }
                 _timeoutProgress.Report(0);
             }
@@ -268,10 +267,10 @@ namespace VideoDownloader.App.BL
                     ClipProgress = 0
                 });
 
-                _timer.Enabled = true;
+                _timeoutBetweenClipDownloadingTimer.Enabled = true;
                 _timeout = GenerateRandomNumber(_configProvider.MinTimeout, _configProvider.MaxTimeout);
                 await Task.Delay(_timeout * 1000, _token);
-                _timer.Enabled = false;
+                _timeoutBetweenClipDownloadingTimer.Enabled = false;
             }
 
             finally
@@ -455,7 +454,7 @@ namespace VideoDownloader.App.BL
             {
                 if (disposing)
                 {
-                    _timer?.Dispose();
+                    _timeoutBetweenClipDownloadingTimer?.Dispose();
 
                 }
             }

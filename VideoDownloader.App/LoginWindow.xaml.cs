@@ -1,6 +1,7 @@
 ﻿using GalaSoft.MvvmLight.Messaging;
 using System.Windows;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
+using VideoDownloader.App.Contracts;
 using VideoDownloader.App.ViewModel;
 
 namespace VideoDownloader.App

@@ -5,13 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
-using VideoDownloader.App.BL;
 using VideoDownloader.App.BL.Messages;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 using VideoDownloader.App.Model;
 using VideoDownloader.App.Properties;
 
@@ -49,17 +47,11 @@ namespace VideoDownloader.App.ViewModel
 
         #region Properties
 
-        public IMessenger Messenger
-        {
-            get { return base.MessengerInstance; }
-        }
+        public IMessenger Messenger => MessengerInstance;
 
         public bool CanDownload
         {
-            get
-            {
-                return _canDownload;
-            }
+            get => _canDownload;
             set
             {
                 Set(() => CanDownload, ref _canDownload, value);
@@ -70,10 +62,7 @@ namespace VideoDownloader.App.ViewModel
 
         public bool IsDownloading
         {
-            get
-            {
-                return _isDownloading;
-            }
+            get => _isDownloading;
             set
             {
                 Set(() => IsDownloading, ref _isDownloading, value);
@@ -84,10 +73,7 @@ namespace VideoDownloader.App.ViewModel
 
         public int CurrentTimeout
         {
-            get
-            {
-                return _currentTimeout;
-            }
+            get => _currentTimeout;
             set
             {
                 Set(() => CurrentTimeout, ref _currentTimeout, value);
@@ -96,10 +82,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string DownloadingCourse
         {
-            get
-            {
-                return _downloadingCourse;
-            }
+            get => _downloadingCourse;
             set
             {
                 Set(() => DownloadingCourse, ref _downloadingCourse, value);
@@ -109,10 +92,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string CurrentAction
         {
-            get
-            {
-                return _currentAction;
-            }
+            get => _currentAction;
             set
             {
                 Set(() => CurrentAction, ref _currentAction, value);
@@ -122,10 +102,7 @@ namespace VideoDownloader.App.ViewModel
 
         public int DownloadingProgress
         {
-            get
-            {
-                return _downloadingProgress;
-            }
+            get => _downloadingProgress;
             set
             {
                 Set(() => DownloadingProgress, ref _downloadingProgress, value);
@@ -134,7 +111,7 @@ namespace VideoDownloader.App.ViewModel
 
         public bool AnyCourseSelected
         {
-            get { return _anyCourseSelected; }
+            get => _anyCourseSelected;
             set
             {
                 Set(() => AnyCourseSelected, ref _anyCourseSelected, value);
@@ -143,7 +120,7 @@ namespace VideoDownloader.App.ViewModel
 
         public int NumberOfSelectedCourses
         {
-            get { return _numberOfSelectedCourses; }
+            get => _numberOfSelectedCourses;
             set
             {
                 Set(() => NumberOfSelectedCourses, ref _numberOfSelectedCourses, value);
@@ -152,7 +129,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string Title
         {
-            get { return _title; }
+            get => _title;
             set
             {
                 Set(() => Title, ref _title, value);
@@ -161,7 +138,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string CurrentUserAgent
         {
-            get { return _currentUserAgent ?? Properties.Resources.Undefined; }
+            get => _currentUserAgent ?? Resources.Undefined;
             set
             {
                 Set(() => CurrentUserAgent, ref _currentUserAgent, value);
@@ -182,7 +159,7 @@ namespace VideoDownloader.App.ViewModel
 
         public bool OnlyForSelectedTag
         {
-            get { return _onlyForSelectedTag; }
+            get => _onlyForSelectedTag;
             set { Set(() => OnlyForSelectedTag, ref _onlyForSelectedTag, value); }
         }
 
@@ -213,7 +190,7 @@ namespace VideoDownloader.App.ViewModel
 
         public List<CourseDescription> AllCourses
         {
-            get { return _allCourses; }
+            get => _allCourses;
             set
             {
                 Set(() => AllCourses, ref _allCourses, value);
@@ -281,7 +258,7 @@ namespace VideoDownloader.App.ViewModel
             _courseService = courseService;
             _courseMetadataService = courseMetadataService;
             NumberOfSelectedCourses = 0;
-            AuthenticatedUser authenticatedUser = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatedUser>(loginService.LoginResultJson);
+            AuthenticatedUser authenticatedUser = JsonConvert.DeserializeObject<AuthenticatedUser>(loginService.LoginResultJson);
             Title = $"{authenticatedUser.CurrentUser.FirstName} {authenticatedUser.CurrentUser.LastName} ({authenticatedUser.CurrentUser.Email})";
 
             CourseTagSelectedCommand = new RelayCommand<string>(OnCourseTagSelected);
@@ -333,26 +310,30 @@ namespace VideoDownloader.App.ViewModel
             RaisePropertyChanged(() => AnyCourseSelected);
         }
 
+        void OnDownloadingProgressChanged(object sender, CourseDownloadingProgressArguments e)
+        {
+            DownloadingProgress = e.ClipProgress;
+            CurrentAction = e.CurrentAction;
+            DownloadingCourse = e.ClipName;
+        }
+        void OnTimeoutProgressChanged(object sender, int e)
+        {
+            CurrentTimeout = e;
+        }
+
         private async void OnDownloadCourseAsync()
         {
+            var downloadingProgress = new Progress<CourseDownloadingProgressArguments>();
+            var timeoutProgress = new Progress<int>();
+
             try
             {
                 IsDownloading = true;
                 _cancellationToken = new CancellationTokenSource();
 
-                var downloadingProgress = new Progress<CourseDownloadingProgressArguments>();
-                downloadingProgress.ProgressChanged += (s, e) =>
-                {
-                    DownloadingProgress = e.ClipProgress;
-                    CurrentAction = e.CurrentAction;
-                    DownloadingCourse = e.ClipName;
-                };
+                downloadingProgress.ProgressChanged += OnDownloadingProgressChanged;
 
-                var timeoutProgress = new Progress<int>();
-                timeoutProgress.ProgressChanged += (s, e) =>
-                {
-                    CurrentTimeout = e;
-                };
+                timeoutProgress.ProgressChanged += OnTimeoutProgressChanged;
 
                 var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
                 foreach (var course in coursesToDownload)
@@ -370,7 +351,7 @@ namespace VideoDownloader.App.ViewModel
                 }
                 IsDownloading = false;
             }
-            catch (OperationCanceledException exc)
+            catch (OperationCanceledException)
             {
                 Messenger.Send(new ExceptionThrownMessage(Resources.YouCanceledDownloading));
             }
@@ -385,6 +366,11 @@ namespace VideoDownloader.App.ViewModel
             catch (Exception exc)
             {
                 Messenger.Send(new ExceptionThrownMessage(exc.Message));
+            }
+            finally
+            {
+                downloadingProgress.ProgressChanged -= OnDownloadingProgressChanged;
+                timeoutProgress.ProgressChanged -= OnTimeoutProgressChanged;
             }
         }
 

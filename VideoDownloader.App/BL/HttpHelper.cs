@@ -49,10 +49,11 @@ namespace VideoDownloader.App.BL
                         totalBytesRead += bytesRead;
                         await stream.WriteAsync(responseBuffer, 0, bytesRead, token);
 
+                        long contentLength = httpReponseMessage.Content.Headers.ContentLength ?? 0;
                         downloadingProgress?.Report(new FileDownloadingProgressArguments
                         {
-                            Percentage = httpReponseMessage.Content.Headers.ContentLength != 0 ?
-                            (int)(((double)totalBytesRead) / httpReponseMessage.Content.Headers.ContentLength * 100)
+                            Percentage = contentLength != 0 ?
+                            (int)(((double)totalBytesRead) / contentLength * 100)
                                 : -1,
                             FileName = $"{fullFileNameWithoutExtension}{extension}"
                         });

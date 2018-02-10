@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 
 namespace VideoDownloader.App.ViewModel
 {
@@ -40,9 +40,9 @@ namespace VideoDownloader.App.ViewModel
 
         #region Properties
 
-        public RelayCommand<object> LoginCommand { get; private set; }
+        public RelayCommand<object> LoginCommand { get; }
 
-        public RelayCommand<ICloseable> CloseCommand { get; private set; }
+        public RelayCommand<ICloseable> CloseCommand { get; }
 
         public bool UseCachedListOfProducts
         {
@@ -52,10 +52,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string UserName
         {
-            get
-            {
-                return _userName;
-            }
+            get => "pluralsight0902@gmail.com";
 
             set
             {
@@ -68,7 +65,7 @@ namespace VideoDownloader.App.ViewModel
         
         public string CurrentOperation
         {
-            get { return _currentOperation; }
+            get => _currentOperation;
             set
             {
                 Set(() => CurrentOperation, ref _currentOperation, value);
@@ -77,7 +74,7 @@ namespace VideoDownloader.App.ViewModel
 
         public bool LoginButtonEnabled
         {
-            get { return _loginButtonEnabled; }
+            get => _loginButtonEnabled;
             set
             {
                 Set(() => LoginButtonEnabled, ref _loginButtonEnabled, value);
@@ -86,7 +83,7 @@ namespace VideoDownloader.App.ViewModel
 
         public bool ShowAnimation
         {
-            get { return _loggingInAnimationVisible; }
+            get => _loggingInAnimationVisible;
             set
             {
                 Set(() => ShowAnimation, ref _loggingInAnimationVisible, value);

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 
 namespace VideoDownloader.App.BL
 {

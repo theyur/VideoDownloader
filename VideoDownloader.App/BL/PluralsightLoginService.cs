@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using VideoDownloader.App.Contract;
+using VideoDownloader.App.Contracts;
 using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.BL

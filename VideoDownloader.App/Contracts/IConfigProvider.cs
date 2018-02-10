@@ -1,4 +1,4 @@
-﻿namespace VideoDownloader.App.Contract
+﻿namespace VideoDownloader.App.Contracts
 {
     public interface IConfigProvider
     {

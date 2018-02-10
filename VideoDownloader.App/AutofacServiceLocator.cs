@@ -1,9 +1,10 @@
 ﻿using Autofac;
-using Microsoft.Practices.ServiceLocation;
+//using Microsoft.Practices.ServiceLocation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using CommonServiceLocator;
 
 namespace VideoDownloader.App
 {

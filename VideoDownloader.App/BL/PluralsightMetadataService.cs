@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VideoDownloader.App.Contract;
+﻿using System.IO;
+using VideoDownloader.App.Contracts;
 using VideoDownloader.App.Properties;
 
 namespace VideoDownloader.App.BL

@@ -71,7 +71,7 @@ namespace VideoDownloader.App.Model
 
         private bool _checkedForDownloading;
         public bool CheckedForDownloading {
-            get { return _checkedForDownloading; }
+            get => _checkedForDownloading;
             set { Set(() => CheckedForDownloading, ref _checkedForDownloading, value); }
         }
     }

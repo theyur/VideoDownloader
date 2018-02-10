@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VideoDownloader.App.Model;
 
-namespace VideoDownloader.App.Contract
+namespace VideoDownloader.App.Contracts
 {
     public interface ICourseService
     {
