@@ -46,13 +46,13 @@ namespace VideoDownloader.App.ViewModel
 
         public bool UseCachedListOfProducts
         {
-            get { return _useCachedListOfProducts; }
+            get => _useCachedListOfProducts;
             set { Set(() => UseCachedListOfProducts, ref _useCachedListOfProducts, value); }
         }
 
         public string UserName
         {
-            get => "pluralsight0902@gmail.com";
+            get => _userName;
 
             set
             {
