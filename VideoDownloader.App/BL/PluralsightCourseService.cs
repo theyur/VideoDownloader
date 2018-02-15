@@ -171,7 +171,8 @@ namespace VideoDownloader.App.BL
                     ResponseEx viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
                         new Uri(Properties.Settings.Default.ViewClipUrl),
                         postJson,
-                        _token);
+                        _token,
+                        Properties.Settings.Default.RetryOnRequestFailureCount);
 
                     if (viewclipResonse.Content == "Unauthorized")
                     {
@@ -182,7 +183,7 @@ namespace VideoDownloader.App.BL
 
                     if (rpcData.Payload.Course.CourseHasCaptions)
                     {
-                        
+
                         string unformattedSubtitlesJson = await _subtitleService.DownloadAsync(httpHelper, module.Author, clipCounter - 1, module.Name, _token);
                         Caption[] unformattedSubtitles = Newtonsoft.Json.JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson);
                         IList<SrtRecord> formattedSubtitles = GetFormattedSubtitles(unformattedSubtitles, clip.Duration);
@@ -241,7 +242,7 @@ namespace VideoDownloader.App.BL
                     Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
                     UserAgent = _userAgent
                 };
-                await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token);
+                await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token, Properties.Settings.Default.RetryOnRequestFailureCount);
 
                 _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
@@ -257,7 +258,8 @@ namespace VideoDownloader.App.BL
 
                 await httpHelper.DownloadWithProgressAsync(clipUrl,
                     $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
-                    fileDownloadingProgress, _token);
+                    fileDownloadingProgress, _token,
+                    Properties.Settings.Default.RetryOnRequestFailureCount);
 
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
@@ -346,7 +348,7 @@ namespace VideoDownloader.App.BL
                 Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
                 UserAgent = _userAgent
             };
-            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, token);
+            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, token, Properties.Settings.Default.RetryOnRequestFailureCount);
 
             return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
         }
@@ -383,7 +385,8 @@ namespace VideoDownloader.App.BL
             };
             var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
                 new Uri(Properties.Settings.Default.AllCoursesUrl),
-                null, _token);
+                null, _token,
+                Properties.Settings.Default.RetryOnRequestFailureCount);
 
             return productsJsonResponse.Content;
         }

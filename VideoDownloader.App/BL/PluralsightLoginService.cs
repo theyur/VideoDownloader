@@ -9,7 +9,7 @@ using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.BL
 {
-    public class PluralsightLoginService:ILoginService
+    public class PluralsightLoginService : ILoginService
     {
         private string _cookies;
         private readonly IConfigProvider _configProvider;
@@ -47,7 +47,8 @@ namespace VideoDownloader.App.BL
             ResponseEx loginResponse;
             do
             {
-                loginResponse = await httpHelper.SendRequest(httpMethod, urlToGo, postData, new CancellationToken());
+                loginResponse = await httpHelper.SendRequest(httpMethod, urlToGo, postData, new CancellationToken(),
+                                                            Properties.Settings.Default.RetryOnRequestFailureCount);
                 _cookies += $"{loginResponse.Cookies};";
                 if (loginResponse.RedirectUrl != null)
                 {

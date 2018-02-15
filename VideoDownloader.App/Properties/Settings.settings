@@ -47,5 +47,8 @@
     <Setting Name="SubtitlesUrl" Type="System.String" Scope="Application">
       <Value Profile="(Default)">https://app.pluralsight.com/player/retrieve-captions</Value>
     </Setting>
+    <Setting Name="RetryOnRequestFailureCount" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">3</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -63,6 +63,27 @@ namespace VideoDownloader.App.BL
             File.Move($"{fullFileNameWithoutExtension}.part", $"{fullFileNameWithoutExtension}{extension}");
         }
 
+        public async Task DownloadWithProgressAsync(Uri fileUri, string fileName, IProgress<FileDownloadingProgressArguments> downloadingProgress, CancellationToken token, int retryOnFailureCount)
+        {
+            int retryCount = retryOnFailureCount;
+            do
+            {
+                try
+                {
+                    await DownloadWithProgressAsync(fileUri, fileName, downloadingProgress, token);
+
+                    // success
+                    return;
+                }
+                catch { }
+
+                retryCount--;
+
+            } while (retryCount > 0);
+
+            throw new Exception("An error occured on downloading the clip.");
+        }
+
         public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, CancellationToken cancellationToken)
         {
             try
@@ -107,10 +128,35 @@ namespace VideoDownloader.App.BL
                 }
                 return responseEx;
             }
-            catch (HttpRequestException /*exc*/)
+            catch (HttpRequestException exc)
             {
+#if DEBUG
+                System.Diagnostics.Debug.Write(exc.ToString());
+#endif
                 return null;
             }
+        }
+
+        public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, CancellationToken cancellationToken, int retryOnFailureCount)
+        {
+            int retryCount = retryOnFailureCount;
+            do
+            {
+                try
+                {
+                    var response = await SendRequest(method, url, postData, cancellationToken);
+                    if (response != null)
+                    {
+                        return response;
+                    }
+                }
+                catch { }
+
+                retryCount--;
+
+            } while (retryCount > 0);
+
+            throw new Exception("Failed to send request to/get response from the server.");
         }
 
         private HttpRequestMessage GetHttpRequestMessage(HttpMethod method, string postData)

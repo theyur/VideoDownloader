@@ -9,7 +9,7 @@ using VideoDownloader.App.Model;
 
 namespace VideoDownloader.App.BL
 {
-    class SubtitleService: ISubtitleService
+    class SubtitleService : ISubtitleService
     {
         public async Task<string> DownloadAsync(HttpHelper httpHelper, string authorId, int partNumber, string moduleName, CancellationToken token)
         {
@@ -17,7 +17,8 @@ namespace VideoDownloader.App.BL
             ResponseEx response = await httpHelper.SendRequest(HttpMethod.Post,
                              new Uri(Properties.Settings.Default.SubtitlesUrl),
                              postData,
-                             token);
+                             token,
+                             Properties.Settings.Default.RetryOnRequestFailureCount);
             return response.Content;
         }
 
