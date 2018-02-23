@@ -266,13 +266,17 @@ namespace VideoDownloader.App.BL
                     Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
                     UserAgent = _userAgent
                 };
-                await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, Properties.Settings.Default.RetryOnRequestFailureCount, _token);
+
+                int ix1 = fileNameWithoutExtension.LastIndexOf('.');
+                int ix2 = fileNameWithoutExtension.LastIndexOf('.', ix1 - 1);
+
+                string fileNameForProgressReport = fileNameWithoutExtension.Substring(ix2 + 1);
 
                 _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
                     CurrentAction = Properties.Resources.Downloading,
-                    ClipName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionPart}",
+                    ClipName = $"{fileNameForProgressReport}.{Properties.Settings.Default.ClipExtensionPart}",
                     CourseProgress = _totalCourseDownloadingProgessRatio,
                     ClipProgress = 0
                 });
@@ -281,14 +285,14 @@ namespace VideoDownloader.App.BL
                 fileDownloadingProgress.ProgressChanged += OnProgressChanged;
 
                 await httpHelper.DownloadWithProgressAsync(clipUrl,
-                    $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
+                    $"{fileNameForProgressReport}.{Properties.Settings.Default.ClipExtensionMp4}",
                     fileDownloadingProgress,
                     Properties.Settings.Default.RetryOnRequestFailureCount, _token);
 
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
                     CurrentAction = Properties.Resources.Downloaded,
-                    ClipName = $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
+                    ClipName = $"{fileNameForProgressReport}.{Properties.Settings.Default.ClipExtensionMp4}",
                     CourseProgress = _totalCourseDownloadingProgessRatio,
                     ClipProgress = 0
                 });
@@ -482,7 +486,6 @@ namespace VideoDownloader.App.BL
                 if (disposing)
                 {
                     _timeoutBetweenClipDownloadingTimer?.Dispose();
-
                 }
             }
             _disposed = true;

@@ -27,15 +27,13 @@
                 <RowDefinition x:Uid="RowDefinition_6" Height="1*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Uid="ColumnDefinition_1" Width="Auto"/>
-                <ColumnDefinition x:Uid="ColumnDefinition_2" Width="*"/>
-                <ColumnDefinition x:Uid="ColumnDefinition_3" Width="*"/>
-                <ColumnDefinition x:Uid="ColumnDefinition_4" Width="*"/>
-                <ColumnDefinition x:Uid="ColumnDefinition_5" Width="*"/>
-                <ColumnDefinition x:Uid="ColumnDefinition_6" Width="*"/>
-                <ColumnDefinition x:Uid="ColumnDefinition_7" Width="*"/>
+                <ColumnDefinition x:Uid="ColumnDefinition_1" Width=".15*"/>
+                <ColumnDefinition x:Uid="ColumnDefinition_2" Width=".15*"/>
+                <ColumnDefinition x:Uid="ColumnDefinition_3" Width=".15*"/>
+                <ColumnDefinition x:Uid="ColumnDefinition_4" Width=".45*"/>
+                <ColumnDefinition x:Uid="ColumnDefinition_5" Width=".1*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Row="0" Grid.Column="0" Margin="2, 0, 5, 0" Grid.ColumnSpan="7" TextWrapping="WrapWithOverflow" FontWeight="Bold" FontSize="14">
+            <TextBlock Grid.Row="0" Grid.Column="0" Margin="2, 0, 5, 0" Grid.ColumnSpan="5" TextWrapping="WrapWithOverflow" FontWeight="Bold" FontSize="14">
                 <Hyperlink attachedProperty:HyperlinkExtensions.UrlFormat="{Binding Source={x:Static res:Settings.Default},
                                Path=CoursesUrlFormat}" ToolTip="Click to open in browser">
                     <Hyperlink.NavigateUri>
@@ -46,19 +44,19 @@
                      
                 </TextBlock>
             <TextBlock Grid.Row="1" Grid.Column="0" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.Level}" FontWeight="Bold"/>
-            <TextBlock Grid.Row="1" Grid.Column="1" Margin="2, 0, 5, 0" Grid.ColumnSpan="5" Text="{Binding SkillLevels}"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Margin="2, 0, 5, 0" Text="{Binding SkillLevels}"/>
+            <TextBlock Grid.Row="1" Grid.Column="2" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.ReleaseDate}" FontWeight="Bold"/>
+            <TextBlock Grid.Row="1" Grid.Column="3" Margin="2, 0, 5, 0" Text="{Binding PublishedDate, StringFormat={}{0:MM/dd/yyyy hh:mm tt}}"/>
             <TextBlock Grid.Row="2" Grid.Column="0" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.Duration}" FontWeight="Bold"/>
-            <TextBlock Grid.Row="2" Grid.Column="1" Margin="2, 0, 5, 0" Grid.ColumnSpan="5" Text="{Binding Duration, Converter={StaticResource IsoTimeToTimeSpanConverter}}"/>
-            <TextBlock Grid.Row="3" Grid.Column="0" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.ReleaseDate}" FontWeight="Bold"/>
-            <TextBlock Grid.Row="3" Grid.Column="1" Margin="2, 0, 5, 0" Grid.ColumnSpan="5" Text="{Binding PublishedDate, StringFormat={}{0:MM/dd/yyyy hh:mm tt}}"/>
-            <TextBlock Grid.Row="4" Grid.Column="0" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.Authors}" FontWeight="Bold"/>
-            <TextBlock Grid.Row="4" Grid.Column="1" Margin="2, 0, 5, 0" Grid.ColumnSpan="5" Text="{Binding Authors, Converter={StaticResource AuthorArrayConverter}}"/>
-            <TextBlock Grid.Row="5" Grid.Column="0" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.Subtitles}" FontWeight="Bold"/>
-            <TextBlock Grid.Row="5" Grid.Column="1" Margin="2, 0, 5, 0" Grid.ColumnSpan="5" Text="{Binding HasTranscript, Converter={StaticResource TranscriptsConverter}}"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" Margin="2, 0, 5, 0" Text="{Binding Duration, Converter={StaticResource IsoTimeToTimeSpanConverter}}"/>
+            <TextBlock Grid.Row="2" Grid.Column="2" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.Authors}" FontWeight="Bold"/>
+            <TextBlock Grid.Row="2" Grid.Column="3" Margin="2, 0, 5, 0" Text="{Binding Authors, Converter={StaticResource AuthorArrayConverter}}"/>
+            <TextBlock Grid.Row="3" Grid.Column="0" Margin="2, 0, 5, 0" Text="{x:Static res:Resources.Subtitles}" FontWeight="Bold"/>
+            <TextBlock Grid.Row="3" Grid.Column="1" Margin="2, 0, 5, 0" Text="{Binding HasTranscript, Converter={StaticResource TranscriptsConverter}}"/>
 
             <CheckBox Grid.Row="0"
-                    Grid.Column="6"
-                    Grid.RowSpan="6"
+                    Grid.Column="4"
+                    Grid.RowSpan="4"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     CommandParameter="{Binding CheckedForDownloading}"
