@@ -79,7 +79,7 @@ namespace VideoDownloader.App.BL
             await DownloadCourse(rpcData);
         }
 
-        public async Task<string> GetCourseTableOfContentAsync(string productId, CancellationToken token)
+        public async Task<string> GetTableOfContentAsync(string productId, CancellationToken token)
         {
             var rpcUri = Properties.Settings.Default.RpcUri;
             StringBuilder tableOfContent = new StringBuilder();
@@ -94,6 +94,31 @@ namespace VideoDownloader.App.BL
                 tableOfContent.AppendLine();
             }
             return tableOfContent.ToString();
+        }
+
+        private async Task<string> GetFullDescription(string productId, CancellationToken token)
+        {
+            string url = $"https://app.pluralsight.com/learner/content/courses/{productId}";
+
+            var httpHelper = new HttpHelper
+            {
+                AcceptHeader = AcceptHeader.JsonTextPlain,
+                AcceptEncoding = string.Empty,
+                ContentType = ContentType.AppJsonUtf8,
+                Cookies = Cookies,
+                Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
+                UserAgent = _userAgent
+            };
+            var courseRespone = await httpHelper.SendRequest(HttpMethod.Get, new Uri(url), null, Properties.Settings.Default.RetryOnRequestFailureCount, token);
+
+            dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(courseRespone.Content);
+            return data.description;
+        }
+
+        public async Task<string> GetFullDescriptionAsync(string productId, CancellationToken token)
+        {
+
+            return await GetFullDescription(productId, token);
         }
 
         private async Task DownloadCourse(RpcData rpcData)
@@ -171,8 +196,7 @@ namespace VideoDownloader.App.BL
                     ResponseEx viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
                         new Uri(Properties.Settings.Default.ViewClipUrl),
                         postJson,
-                        _token,
-                        Properties.Settings.Default.RetryOnRequestFailureCount);
+                        Properties.Settings.Default.RetryOnRequestFailureCount, _token);
 
                     if (viewclipResonse.Content == "Unauthorized")
                     {
@@ -203,7 +227,7 @@ namespace VideoDownloader.App.BL
             List<SrtRecord> srtRecords = new List<SrtRecord>();
             System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("us");
 
-            for (int i = 0; i < captions.Count() - 1; ++i)
+            for (int i = 0; i < captions.Length - 1; ++i)
             {
                 SrtRecord srtRecord = new SrtRecord
                 {
@@ -242,7 +266,7 @@ namespace VideoDownloader.App.BL
                     Referrer = new Uri(Properties.Settings.Default.ReferrerUrlForDownloading),
                     UserAgent = _userAgent
                 };
-                await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, _token, Properties.Settings.Default.RetryOnRequestFailureCount);
+                await httpHelper.SendRequest(HttpMethod.Head, clipUrl, null, Properties.Settings.Default.RetryOnRequestFailureCount, _token);
 
                 _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
@@ -258,8 +282,8 @@ namespace VideoDownloader.App.BL
 
                 await httpHelper.DownloadWithProgressAsync(clipUrl,
                     $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
-                    fileDownloadingProgress, _token,
-                    Properties.Settings.Default.RetryOnRequestFailureCount);
+                    fileDownloadingProgress,
+                    Properties.Settings.Default.RetryOnRequestFailureCount, _token);
 
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
                 {
@@ -348,7 +372,7 @@ namespace VideoDownloader.App.BL
                 Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
                 UserAgent = _userAgent
             };
-            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, token, Properties.Settings.Default.RetryOnRequestFailureCount);
+            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, Properties.Settings.Default.RetryOnRequestFailureCount, token);
 
             return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
         }
@@ -385,8 +409,8 @@ namespace VideoDownloader.App.BL
             };
             var productsJsonResponse = await httpHelper.SendRequest(HttpMethod.Get,
                 new Uri(Properties.Settings.Default.AllCoursesUrl),
-                null, _token,
-                Properties.Settings.Default.RetryOnRequestFailureCount);
+                null,
+                Properties.Settings.Default.RetryOnRequestFailureCount, _token);
 
             return productsJsonResponse.Content;
         }

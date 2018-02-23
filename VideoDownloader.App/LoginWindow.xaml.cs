@@ -1,6 +1,4 @@
 ﻿using GalaSoft.MvvmLight.Messaging;
-using System.Windows;
-using VideoDownloader.App.Contracts;
 using VideoDownloader.App.Contracts;
 using VideoDownloader.App.ViewModel;
 
@@ -9,7 +7,7 @@ namespace VideoDownloader.App
     /// <summary>
     /// Interaction logic for LoginWindow.xaml
     /// </summary>
-    public partial class LoginWindow : Window, ICloseable
+    public partial class LoginWindow : ICloseable
     {
         public LoginWindow()
         {

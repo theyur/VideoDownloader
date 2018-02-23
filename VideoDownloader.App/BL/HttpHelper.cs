@@ -63,7 +63,9 @@ namespace VideoDownloader.App.BL
             File.Move($"{fullFileNameWithoutExtension}.part", $"{fullFileNameWithoutExtension}{extension}");
         }
 
-        public async Task DownloadWithProgressAsync(Uri fileUri, string fileName, IProgress<FileDownloadingProgressArguments> downloadingProgress, CancellationToken token, int retryOnFailureCount)
+        public async Task DownloadWithProgressAsync(Uri fileUri, string fileName,
+            IProgress<FileDownloadingProgressArguments> downloadingProgress, int retryOnFailureCount,
+            CancellationToken token)
         {
             int retryCount = retryOnFailureCount;
             do
@@ -75,9 +77,12 @@ namespace VideoDownloader.App.BL
                     // success
                     return;
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
 
-                retryCount--;
+                --retryCount;
 
             } while (retryCount > 0);
 
@@ -137,7 +142,8 @@ namespace VideoDownloader.App.BL
             }
         }
 
-        public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, CancellationToken cancellationToken, int retryOnFailureCount)
+        public async Task<ResponseEx> SendRequest(HttpMethod method, Uri url, string postData, int retryOnFailureCount,
+            CancellationToken cancellationToken)
         {
             int retryCount = retryOnFailureCount;
             do
@@ -150,9 +156,12 @@ namespace VideoDownloader.App.BL
                         return response;
                     }
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
 
-                retryCount--;
+                --retryCount;
 
             } while (retryCount > 0);
 

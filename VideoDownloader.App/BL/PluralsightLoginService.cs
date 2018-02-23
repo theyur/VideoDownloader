@@ -47,8 +47,8 @@ namespace VideoDownloader.App.BL
             ResponseEx loginResponse;
             do
             {
-                loginResponse = await httpHelper.SendRequest(httpMethod, urlToGo, postData, new CancellationToken(),
-                                                            Properties.Settings.Default.RetryOnRequestFailureCount);
+                loginResponse = await httpHelper.SendRequest(httpMethod, urlToGo, postData,
+                                                            Properties.Settings.Default.RetryOnRequestFailureCount, new CancellationToken());
                 _cookies += $"{loginResponse.Cookies};";
                 if (loginResponse.RedirectUrl != null)
                 {

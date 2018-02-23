@@ -147,7 +147,7 @@ namespace VideoDownloader.App.ViewModel
 
         public string TagsFilterText
         {
-            get { return _tagsFilterText ?? string.Empty; }
+            get => _tagsFilterText ?? string.Empty;
             set
             {
                 if (Set(() => TagsFilterText, ref _tagsFilterText, value))
@@ -160,30 +160,32 @@ namespace VideoDownloader.App.ViewModel
         public bool OnlyForSelectedTag
         {
             get => _onlyForSelectedTag;
-            set { Set(() => OnlyForSelectedTag, ref _onlyForSelectedTag, value); }
+            set
+            {
+                Set(() => OnlyForSelectedTag, ref _onlyForSelectedTag, value);
+                RaisePropertyChanged(nameof(CoursesFilterText));
+            }
         }
 
         public string CoursesFilterText
         {
-            get { return _coursesFilterText ?? string.Empty; }
+            get => _coursesFilterText ?? string.Empty;
             set
             {
-                if (Set(() => CoursesFilterText, ref _coursesFilterText, value))
+                Set(() => CoursesFilterText, ref _coursesFilterText, value);
+                if (OnlyForSelectedTag)
                 {
-                    if (OnlyForSelectedTag)
-                    {
-                        CurrentDisplayedFilteredCourses =
-                        new ObservableCollection<CourseDescription>(CurrentDisplayedCourses
+                    CurrentDisplayedFilteredCourses =
+                    new ObservableCollection<CourseDescription>(CurrentDisplayedCourses
+                    .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
+                    .OrderByDescending(c => c.PublishedDate));
+                }
+                else if (AllCourses.Any())
+                {
+                    CurrentDisplayedFilteredCourses =
+                        new ObservableCollection<CourseDescription>(AllCourses
                         .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
                         .OrderByDescending(c => c.PublishedDate));
-                    }
-                    else if (AllCourses.Any())
-                    {
-                        CurrentDisplayedFilteredCourses =
-                            new ObservableCollection<CourseDescription>(AllCourses
-                            .Where(course => course.Title.ToLower().Contains(CoursesFilterText.ToLower()))
-                            .OrderByDescending(c => c.PublishedDate));
-                    }
                 }
             }
         }
@@ -212,7 +214,7 @@ namespace VideoDownloader.App.ViewModel
 
         public IEnumerable<CourseDescription> CurrentDisplayedCourses
         {
-            get { return _currentDisplayedCourses; }
+            get => _currentDisplayedCourses;
             set
             {
                 Set(() => CurrentDisplayedCourses, ref _currentDisplayedCourses, value);
@@ -221,7 +223,7 @@ namespace VideoDownloader.App.ViewModel
 
         public ObservableCollection<CourseDescription> CurrentDisplayedFilteredCourses
         {
-            get { return _currentDisplayedFilteredCourses; }
+            get => _currentDisplayedFilteredCourses;
             set
             {
                 Set(() => CurrentDisplayedFilteredCourses, ref _currentDisplayedFilteredCourses, value);
@@ -338,12 +340,14 @@ namespace VideoDownloader.App.ViewModel
                 var coursesToDownload = CurrentDisplayedFilteredCourses.Where(c => c.CheckedForDownloading);
                 foreach (var course in coursesToDownload)
                 {
-                    string tableOfContent = await _courseService.GetCourseTableOfContentAsync(course.Id, _cancellationToken.Token);
+                    string tableOfContent = await _courseService.GetTableOfContentAsync(course.Id, _cancellationToken.Token);
+                    string fullDescription = await _courseService.GetFullDescriptionAsync(course.Id, _cancellationToken.Token);
+                    
                     string destinationFolder = _configProvider.DownloadsPath;
                     string validBaseCourseDirectory = $"{_courseService.GetBaseCourseDirectoryName(destinationFolder, course.Title)}";
 
                     _courseMetadataService.WriteTableOfContent(validBaseCourseDirectory, tableOfContent);
-                    _courseMetadataService.WriteDescription(validBaseCourseDirectory, course.Description);
+                    _courseMetadataService.WriteDescription(validBaseCourseDirectory, fullDescription);
                     await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
 
                     course.CheckedForDownloading = false;

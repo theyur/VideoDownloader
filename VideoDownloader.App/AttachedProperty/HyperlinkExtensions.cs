@@ -25,12 +25,14 @@ namespace VideoDownloader.App.AttachedProperty
             var hyperlink = sender as Hyperlink;
             if (!string.IsNullOrEmpty((string) args.NewValue))
             {
+                Debug.Assert(hyperlink != null, nameof(hyperlink) + " != null");
                 hyperlink.NavigateUri = new Uri(string.Format((string) args.NewValue, hyperlink.NavigateUri));
                 hyperlink.RequestNavigate -= Hyperlink_RequestNavigate;
                 hyperlink.RequestNavigate += Hyperlink_RequestNavigate;
             }
             else
             {
+                Debug.Assert(hyperlink != null, nameof(hyperlink) + " != null");
                 hyperlink.RequestNavigate -= Hyperlink_RequestNavigate;
             }
         }
