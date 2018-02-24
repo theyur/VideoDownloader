@@ -267,10 +267,7 @@ namespace VideoDownloader.App.BL
                     UserAgent = _userAgent
                 };
 
-                int ix1 = fileNameWithoutExtension.LastIndexOf('.');
-                int ix2 = fileNameWithoutExtension.LastIndexOf('.', ix1 - 1);
-
-                string fileNameForProgressReport = fileNameWithoutExtension.Substring(ix2 + 1);
+                string fileNameForProgressReport = Utils.GetShortenedFileName(fileNameWithoutExtension);
 
                 _totalCourseDownloadingProgessRatio = (int)(((double)clipCounter) / partsNumber * 100);
                 _courseDownloadingProgress.Report(new CourseDownloadingProgressArguments
@@ -285,7 +282,7 @@ namespace VideoDownloader.App.BL
                 fileDownloadingProgress.ProgressChanged += OnProgressChanged;
 
                 await httpHelper.DownloadWithProgressAsync(clipUrl,
-                    $"{fileNameForProgressReport}.{Properties.Settings.Default.ClipExtensionMp4}",
+                    $"{fileNameWithoutExtension}.{Properties.Settings.Default.ClipExtensionMp4}",
                     fileDownloadingProgress,
                     Properties.Settings.Default.RetryOnRequestFailureCount, _token);
 

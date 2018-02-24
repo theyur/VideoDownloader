@@ -12,5 +12,13 @@ namespace VideoDownloader.App.BL
             path = r.Replace(path, string.Empty);
             return path;
         }
+
+        public static string GetShortenedFileName(string fileNameWithoutExtension)
+        {
+            int ix1 = fileNameWithoutExtension.LastIndexOf('\\');
+            int ix2 = fileNameWithoutExtension.LastIndexOf('\\', ix1 - 1);
+
+            return fileNameWithoutExtension.Substring(ix2 + 1);
+        }
     }
 }
