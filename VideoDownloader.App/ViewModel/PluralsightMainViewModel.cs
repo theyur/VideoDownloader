@@ -31,7 +31,7 @@ namespace VideoDownloader.App.ViewModel
 
         private bool _isDownloading;
         private bool _anyCourseSelected;
-        private string _downloadingCourse;
+        private string _courseBeingDownloaded;
         private string _currentAction;
         private int _downloadingProgress;
         private int _currentTimeout;
@@ -80,12 +80,12 @@ namespace VideoDownloader.App.ViewModel
             }
         }
 
-        public string DownloadingCourse
+        public string CourseBeingDownloaded
         {
-            get => _downloadingCourse;
+            get => _courseBeingDownloaded;
             set
             {
-                Set(() => DownloadingCourse, ref _downloadingCourse, value);
+                Set(() => CourseBeingDownloaded, ref _courseBeingDownloaded, value);
             }
 
         }
@@ -316,7 +316,7 @@ namespace VideoDownloader.App.ViewModel
         {
             DownloadingProgress = e.ClipProgress;
             CurrentAction = e.CurrentAction;
-            DownloadingCourse = e.ClipName;
+            CourseBeingDownloaded = e.ClipName;
         }
         void OnTimeoutProgressChanged(object sender, int e)
         {

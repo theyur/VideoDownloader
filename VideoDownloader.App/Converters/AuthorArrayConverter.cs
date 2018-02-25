@@ -15,9 +15,10 @@ namespace VideoDownloader.App.Converters
 
             string result = string.Empty;
             var authors = (Author[]) value;
+
             if (authors != null)
             {
-                result = authors.Aggregate(result, (current, author) => current + $"{author.DisplayName}");
+                result = string.Join(", ", Array.ConvertAll(authors, i => i.DisplayName));
             }
             return result;
         }

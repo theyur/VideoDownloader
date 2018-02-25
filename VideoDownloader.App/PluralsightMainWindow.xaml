@@ -121,11 +121,11 @@
                 <TextBlock 
                 HorizontalAlignment="Stretch"
                 TextWrapping="Wrap"
-                Height="40"
+                Height="20"
                 Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibleConverter}}">
                 <Run Text="{Binding CurrentAction}" />
                 <Run Text=" "/>
-                <Run Text="{Binding DownloadingCourse}" />
+                <Run Text="{Binding CourseBeingDownloaded}" />
                 </TextBlock>
 
                 <WrapPanel>
@@ -145,7 +145,7 @@
                              Maximum="100" 
                              Minimum="0" 
                              HorizontalAlignment="Stretch" 
-                             Margin="5, 2, 5, 2"
+                             Margin="5, 2, 5, 5"
                              Height="20" />
             </StackPanel>
         </Grid>
