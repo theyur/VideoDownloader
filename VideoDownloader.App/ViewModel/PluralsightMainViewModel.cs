@@ -41,6 +41,7 @@ namespace VideoDownloader.App.ViewModel
         private string _coursesFilterText;
         private string _title;
         private string _currentUserAgent;
+        private string _lastFinishedMsg;
         private bool _onlyForSelectedTag;
 
         #endregion
@@ -68,6 +69,8 @@ namespace VideoDownloader.App.ViewModel
                 Set(() => IsDownloading, ref _isDownloading, value);
                 DownloadCourseCommand.RaiseCanExecuteChanged();
                 CancelDownloadsCommand.RaiseCanExecuteChanged();
+
+
             }
         }
 
@@ -143,6 +146,12 @@ namespace VideoDownloader.App.ViewModel
             {
                 Set(() => CurrentUserAgent, ref _currentUserAgent, value);
             }
+        }
+
+        public string LastFinishedMsg
+        {
+            get => _lastFinishedMsg ?? String.Empty;
+            set { Set(() => LastFinishedMsg, ref _lastFinishedMsg, value); }
         }
 
         public string TagsFilterText
@@ -272,6 +281,7 @@ namespace VideoDownloader.App.ViewModel
             NumberOfCoursesForTag = _courseService.CoursesByToolName.ToDictionary(kvp => kvp.Key, v => v.Value.Count);
             AllCourses = _courseService.CoursesByToolName.Values.SelectMany(x => x).Distinct().ToList();
 
+            LastFinishedMessage = new LastFinishedMessageComposer(s => LastFinishedMsg = s);
         }
 
         #endregion
@@ -348,7 +358,7 @@ namespace VideoDownloader.App.ViewModel
 
                     _courseMetadataService.WriteTableOfContent(validBaseCourseDirectory, tableOfContent);
                     _courseMetadataService.WriteDescription(validBaseCourseDirectory, fullDescription);
-                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token);
+                    await _courseService.DownloadAsync(course.Id, downloadingProgress, timeoutProgress, _cancellationToken.Token, LastFinishedMessage);
 
                     course.CheckedForDownloading = false;
                     --NumberOfSelectedCourses;
@@ -399,5 +409,36 @@ namespace VideoDownloader.App.ViewModel
         }
 
         #endregion
+
+
+        public LastFinishedMessageComposer LastFinishedMessage;
+
+        public class LastFinishedMessageComposer
+        {
+            private readonly Func<string>[] _getMessages = new Func<string>[]
+            {
+                () => $"Started at {DateTime.Now:HH:mm dd-MMM-yy}",
+                () => $"Finished at {DateTime.Now:HH:mm dd-MMM-yy}",
+                () => $"Cancelled at {DateTime.Now:HH:mm dd-MMM-yy}",
+                () => $"Failed at {DateTime.Now:HH:mm dd-MMM-yy}",
+            };
+
+            private readonly Action<string> _action;
+
+            public LastFinishedMessageComposer(Action<string> action)
+            {
+                _action = action;
+                _action("No download has been started");
+            }
+
+            public void SetState(int state)
+            {
+                if (state < 0 && state > 3) throw new ArgumentException(nameof(state));
+
+                _action(_getMessages[state]());
+            }
+        }
+
+        
     }
 }
