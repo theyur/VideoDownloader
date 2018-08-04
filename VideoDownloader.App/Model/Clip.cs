@@ -10,7 +10,7 @@
 
         public string Title { get; set; }
 
-        public int Duration { get; set; }
+        public string Duration { get; set; }
 
         public string FormattedDuration { get; set; }
 
