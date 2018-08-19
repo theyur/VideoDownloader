@@ -17,7 +17,7 @@ using VideoDownloader.App.Contracts;
 using VideoDownloader.App.Converters;
 using VideoDownloader.App.GraphQL;
 using VideoDownloader.App.Model;
-using Xceed.Wpf.Toolkit;
+using VideoDownloader.App.ViewModel;
 using Timer = System.Timers.Timer;
 
 namespace VideoDownloader.App.BL
@@ -40,6 +40,7 @@ namespace VideoDownloader.App.BL
         private int _timeout;
         private IProgress<int> _timeoutProgress;
         private bool _disposed;
+        private PluralsightMainViewModel.LastFinishedMessageComposer _lastFinishedMessageComposer;
 
         #endregion
 
@@ -76,11 +77,15 @@ namespace VideoDownloader.App.BL
         public async Task DownloadAsync(string productId,
           IProgress<CourseDownloadingProgressArguments> downloadingProgress,
           IProgress<int> timeoutProgress,
-          CancellationToken token)
+            CancellationToken token,
+            PluralsightMainViewModel.LastFinishedMessageComposer lastFinishedMessage)
         {
             _timeoutProgress = timeoutProgress;
             _courseDownloadingProgress = downloadingProgress;
             _token = token;
+
+            _lastFinishedMessageComposer = lastFinishedMessage;
+            _lastFinishedMessageComposer.SetState(0);
 
             var rpcUri = Properties.Settings.Default.RpcUri;
             RpcData rpcData = await GetDeserialisedRpcData(rpcUri, productId, _token);
@@ -145,6 +150,16 @@ namespace VideoDownloader.App.BL
                     ++moduleCounter;
                     await DownloadModule(rpcData, courseDirectory, moduleCounter, module);
                 }
+
+                _lastFinishedMessageComposer.SetState(1);
+            }
+            catch (OperationCanceledException)
+            {
+                _lastFinishedMessageComposer.SetState(2);
+            }
+            catch (Exception)
+            {
+                _lastFinishedMessageComposer.SetState(3);
             }
             finally
             {

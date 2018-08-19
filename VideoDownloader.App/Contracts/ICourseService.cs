@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using VideoDownloader.App.Model;
+using VideoDownloader.App.ViewModel;
 
 namespace VideoDownloader.App.Contracts
 {
@@ -19,7 +20,8 @@ namespace VideoDownloader.App.Contracts
 
         Dictionary<string, List<CourseDescription>> CoursesByToolName { get; set; }
 
-        Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress, CancellationToken token);
+        Task DownloadAsync(string productId, IProgress<CourseDownloadingProgressArguments> downloadingProgress, IProgress<int> timeoutProgress,
+            CancellationToken token, PluralsightMainViewModel.LastFinishedMessageComposer lastFinishedMessage);
 
         Task<string> GetTableOfContentAsync(string productId, CancellationToken token);
 
