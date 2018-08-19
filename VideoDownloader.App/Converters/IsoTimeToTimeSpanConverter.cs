@@ -18,6 +18,7 @@ namespace VideoDownloader.App.Converters
 
                 return timeSpan.ToString(@"hh\:mm\:ss");
             }
+
             return new TimeSpan();
         }
 
@@ -25,5 +26,9 @@ namespace VideoDownloader.App.Converters
         {
             throw new NotImplementedException();
         }
+
+        private static IsoTimeToTimeSpanConverter _instance;
+
+        public static IsoTimeToTimeSpanConverter Instance => _instance ?? (_instance = new IsoTimeToTimeSpanConverter());
     }
 }

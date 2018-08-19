@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -7,8 +9,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using VideoDownloader.App.BL.Exceptions;
 using VideoDownloader.App.Contracts;
+using VideoDownloader.App.Converters;
+using VideoDownloader.App.GraphQL;
 using VideoDownloader.App.Model;
 using VideoDownloader.App.ViewModel;
 using Timer = System.Timers.Timer;
@@ -68,8 +75,8 @@ namespace VideoDownloader.App.BL
         }
 
         public async Task DownloadAsync(string productId,
-            IProgress<CourseDownloadingProgressArguments> downloadingProgress,
-            IProgress<int> timeoutProgress,
+          IProgress<CourseDownloadingProgressArguments> downloadingProgress,
+          IProgress<int> timeoutProgress,
             CancellationToken token,
             PluralsightMainViewModel.LastFinishedMessageComposer lastFinishedMessage)
         {
@@ -203,42 +210,42 @@ namespace VideoDownloader.App.BL
             foreach (var clip in module.Clips)
             {
                 ++clipCounter;
-                var postJson = BuildViewclipPostDataJson(rpcData, moduleCounter, clipCounter);
+
+                var s = GraphQl.GetClipsRequest(course, module, clipCounter - 1);
+
+                var clipUrlResponse =
+                    await httpHelper.SendRequest(HttpMethod.Post,
+                        new Uri($"https://{Properties.Settings.Default.SiteHostName}/player/api/graphql"),
+                        s,
+                        Properties.Settings.Default.RetryOnRequestFailureCount, _token);
+
+                dynamic courseExtraInfo = JsonConvert.DeserializeObject<ExpandoObject>(clipUrlResponse.Content, new ExpandoObjectConverter());
+
+                var courseUrl = courseExtraInfo.data.viewClip.urls[0].url;
 
                 var fileName = GetFullFileNameWithoutExtension(clipCounter, moduleDirectory, clip);
 
                 if (!File.Exists($"{fileName}.{Properties.Settings.Default.ClipExtensionMp4}"))
                 {
-                    ResponseEx viewclipResonse = await httpHelper.SendRequest(HttpMethod.Post,
-                        new Uri(Properties.Settings.Default.ViewClipUrl),
-                        postJson,
-                        Properties.Settings.Default.RetryOnRequestFailureCount, _token);
-
-                    if (viewclipResonse.Content == "Unauthorized")
-                    {
-                        throw new UnauthorizedException(Properties.Resources.CheckYourSubscription);
-                    }
-
-                    var clipFile = Newtonsoft.Json.JsonConvert.DeserializeObject<ClipFile>(viewclipResonse.Content);
-
                     if (rpcData.Payload.Course.CourseHasCaptions)
                     {
 
-                        string unformattedSubtitlesJson = await _subtitleService.DownloadAsync(httpHelper, module.Author, clipCounter - 1, module.Name, _token);
+                        string unformattedSubtitlesJson = await _subtitleService.DownloadAsync(httpHelper, course.GetAuthorNameId(module.AuthorId), clipCounter - 1, module.ModuleId, _token);
                         Caption[] unformattedSubtitles = Newtonsoft.Json.JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson);
                         IList<SrtRecord> formattedSubtitles = GetFormattedSubtitles(unformattedSubtitles, clip.Duration);
                         _subtitleService.Write($"{fileName}.{Properties.Settings.Default.SubtitilesExtensionMp4}", formattedSubtitles);
                     }
 
-                    await DownloadClip(new Uri(clipFile.Urls[1].Url),
-                      fileName,
-                      clipCounter,
-                      rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
+                    await DownloadClip(
+                        new Uri(courseUrl),
+                        fileName,
+                        clipCounter,
+                        rpcData.Payload.Course.Modules.Sum(m => m.Clips.Length));
                 }
             }
         }
 
-        private List<SrtRecord> GetFormattedSubtitles(Caption[] captions, int totalDuration)
+        private List<SrtRecord> GetFormattedSubtitles(Caption[] captions, string totalDuration)
         {
             List<SrtRecord> srtRecords = new List<SrtRecord>();
             System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("en-US");
@@ -254,10 +261,12 @@ namespace VideoDownloader.App.BL
                 srtRecords.Add(srtRecord);
             }
 
+            var toTimeSpan = IsoTimeToTimeSpanConverter.Instance.Convert(totalDuration, typeof(String), null, CultureInfo.CurrentCulture) ?? new TimeSpan();
+
             SrtRecord finalSrtRecord = new SrtRecord
             {
                 FromTimeSpan = TimeSpan.FromSeconds(Double.Parse(captions.Last().DisplayTimeOffset, culture)),
-                ToTimeSpan = TimeSpan.FromSeconds(Convert.ToDouble(totalDuration)),
+                ToTimeSpan = TimeSpan.Parse(toTimeSpan.ToString()), //TimeSpan.FromSeconds(Convert.ToDouble(totalDuration)),
                 Text = captions.Last().Text
             };
 
@@ -379,7 +388,6 @@ namespace VideoDownloader.App.BL
 
         private async Task<RpcData> GetDeserialisedRpcData(string rpcUri, string productId, CancellationToken token)
         {
-            string rpcJson = $"{{\"fn\":\"bootstrapPlayer\", \"payload\":{{\"courseId\":\"{productId}\"}} }}";
             var httpHelper = new HttpHelper
             {
                 AcceptHeader = AcceptHeader.JsonTextPlain,
@@ -389,9 +397,29 @@ namespace VideoDownloader.App.BL
                 Referrer = new Uri($"https://{Properties.Settings.Default.SiteHostName}"),
                 UserAgent = _userAgent
             };
-            var courseRespone = await httpHelper.SendRequest(HttpMethod.Post, new Uri(rpcUri), rpcJson, Properties.Settings.Default.RetryOnRequestFailureCount, token);
+            var courseRespone = await httpHelper.SendRequest(HttpMethod.Get, new Uri($"https://app.pluralsight.com/learner/content/courses/{productId}"), "", Properties.Settings.Default.RetryOnRequestFailureCount, token);
 
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<RpcData>(courseRespone.Content);
+            CourseRpc courseRpc = JsonConvert.DeserializeObject<CourseRpc>(courseRespone.Content);
+
+            var graphQlRequest = GraphQl.GetCourseExtraInfoRequest(productId);
+            var extraInfoResponse =
+                await httpHelper.SendRequest(HttpMethod.Post,
+                    new Uri($"https://{Properties.Settings.Default.SiteHostName}/player/api/graphql"), graphQlRequest,
+                    Properties.Settings.Default.RetryOnRequestFailureCount, token);
+
+            dynamic courseExtraInfo = JsonConvert.DeserializeObject<ExpandoObject>(extraInfoResponse.Content, new ExpandoObjectConverter());
+
+            courseRpc.CourseHasCaptions = courseExtraInfo.data.rpc.bootstrapPlayer.extraInfo.courseHasCaptions;
+            courseRpc.SupportsWideScreenVideoFormats = courseExtraInfo.data.rpc.bootstrapPlayer.extraInfo.supportsWideScreenVideoFormats;
+
+            var r = new RpcData
+            {
+                Payload = new PayloadRpc
+                {
+                    Course = courseRpc
+                }
+            };
+            return r;
         }
 
         public string GetBaseCourseDirectoryName(string destinationDirectory, string courseName)
