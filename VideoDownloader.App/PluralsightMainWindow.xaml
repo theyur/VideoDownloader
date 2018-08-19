@@ -12,8 +12,23 @@
         Height="610" Width="900" MinHeight="610">
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Height="25">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="200"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
             <StatusBarItem>
                 <TextBlock Text="{Binding CurrentUserAgent}"  />
+            </StatusBarItem>
+            <Separator Grid.Column="1"/>
+            <StatusBarItem Grid.Column="2" HorizontalAlignment="Right">
+                <TextBlock Text="{Binding LastFinishedMsg}" Padding="0"/>
             </StatusBarItem>
         </StatusBar>
         <Grid x:Name="LayoutRoot" >

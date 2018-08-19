@@ -75,7 +75,7 @@
                 VerticalAlignment="Center" 
                 Content="{x:Static res:Resources.Login}" Grid.Row="6"
                 Grid.ColumnSpan="2"
-                Grid.Column="0" Command="{Binding LoginCommand}" 
+                Grid.Column="0" Command="{Binding LoginCommand, Mode=OneWay}" 
                 CommandParameter="{Binding ElementName=PasswordTextBox}" 
                 Margin="20,0,20,0"
                 Height="30"
