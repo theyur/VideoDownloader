@@ -12,7 +12,8 @@ namespace VideoDownloader.App.GraphQL
             $"clipIndex: {clipIndex}, " +
             $"courseName: \\\"{course.Name}\\\", " +
             $"includeCaptions: {course.CourseHasCaptions.ToString().ToLowerInvariant()}, locale: \\\"en\\\", " +
-            $"mediaType: \\\"mp4\\\", moduleName: \\\"{module.ModuleId}\\\", " +
+            $"mediaType: \\\"mp4\\\", " +
+            $"moduleName: \\\"{module.Name}\\\", " +
             $"quality: \\\"{(course.SupportsWideScreenVideoFormats ? Properties.Settings.Default.Resolution1280x720 : Properties.Settings.Default.Resolution1024x768)}\\\"}}) " +
             $"{{urls {{url cdn rank source}}, status}}}}\", " +
             $"\"variables\": {{}}}}";

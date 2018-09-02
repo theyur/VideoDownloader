@@ -229,10 +229,12 @@ namespace VideoDownloader.App.BL
                 {
                     if (rpcData.Payload.Course.CourseHasCaptions)
                     {
-
                         string unformattedSubtitlesJson = await _subtitleService.DownloadAsync(httpHelper, course.GetAuthorNameId(module.AuthorId), clipCounter - 1, module.ModuleId, _token);
-                        Caption[] unformattedSubtitles = Newtonsoft.Json.JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson);
-                        IList<SrtRecord> formattedSubtitles = GetFormattedSubtitles(unformattedSubtitles, clip.Duration);
+                        Caption[] unformattedSubtitles = JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson);
+                        IList<SrtRecord> formattedSubtitles =
+                            unformattedSubtitles.Any() 
+                                ? GetFormattedSubtitles(unformattedSubtitles, clip.Duration) 
+                                : new List<SrtRecord>();
                         _subtitleService.Write($"{fileName}.{Properties.Settings.Default.SubtitilesExtensionMp4}", formattedSubtitles);
                     }
 
@@ -411,6 +413,8 @@ namespace VideoDownloader.App.BL
 
             courseRpc.CourseHasCaptions = courseExtraInfo.data.rpc.bootstrapPlayer.extraInfo.courseHasCaptions;
             courseRpc.SupportsWideScreenVideoFormats = courseExtraInfo.data.rpc.bootstrapPlayer.extraInfo.supportsWideScreenVideoFormats;
+
+            courseRpc.Modules.ToList().ForEach(m => m.Name = m.Id?.Substring(m.Id.LastIndexOf('|') + 1));
 
             var r = new RpcData
             {
