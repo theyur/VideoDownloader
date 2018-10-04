@@ -19,6 +19,9 @@
         public bool Watched { get; set; }
 
         public string Id { get; set; }
+
+        public string PureId => Id.Substring(Id.LastIndexOf('|') + 1);
+
         public string ModuleTitle { get; set; }
     }
 }

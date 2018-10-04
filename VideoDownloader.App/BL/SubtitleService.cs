@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,18 +12,30 @@ namespace VideoDownloader.App.BL
 {
     class SubtitleService: ISubtitleService
     {
-        public async Task<string> DownloadAsync(HttpHelper httpHelper, string authorId, int partNumber, string moduleName, CancellationToken token)
+        public async Task<string> DownloadAsync(HttpHelper httpHelper, string authorId, int partNumber, string moduleName, string clipId, CancellationToken token)
         {
+            /*
             string postData = BuildSubtitlePostDataJson(authorId, partNumber, moduleName);
             ResponseEx response = await httpHelper.SendRequest(HttpMethod.Post,
                              new Uri(Properties.Settings.Default.SubtitlesUrl),
                              postData,
                              Properties.Settings.Default.RetryOnRequestFailureCount, token);
+            */
+
+            var response = await httpHelper.SendRequest(
+                HttpMethod.Get,
+                new Uri($"https://app.pluralsight.com/transcript/api/v1/caption/json/{clipId}/en"),
+                String.Empty,
+                Properties.Settings.Default.RetryOnRequestFailureCount,
+                token);
+
             return response.Content;
         }
 
         public void Write(string fileName, IList<SrtRecord> subtitleRecords)
         {
+            if(!subtitleRecords.Any()) return;
+            
             using (StreamWriter sw = new StreamWriter(fileName))
             {
                 int index = 1;

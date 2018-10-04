@@ -157,7 +157,7 @@ namespace VideoDownloader.App.BL
             {
                 _lastFinishedMessageComposer.SetState(2);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _lastFinishedMessageComposer.SetState(3);
             }
@@ -221,7 +221,17 @@ namespace VideoDownloader.App.BL
 
                 dynamic courseExtraInfo = JsonConvert.DeserializeObject<ExpandoObject>(clipUrlResponse.Content, new ExpandoObjectConverter());
 
-                var courseUrl = courseExtraInfo.data.viewClip.urls[0].url;
+                dynamic courseUrl;
+                try
+                {
+                    courseUrl = courseExtraInfo.data.viewClip.urls[0].url;
+                }
+                catch (Exception e)
+                {
+                    var a = 42;
+                    throw;
+                }
+                
 
                 var fileName = GetFullFileNameWithoutExtension(clipCounter, moduleDirectory, clip);
 
@@ -229,8 +239,12 @@ namespace VideoDownloader.App.BL
                 {
                     if (rpcData.Payload.Course.CourseHasCaptions)
                     {
-                        string unformattedSubtitlesJson = await _subtitleService.DownloadAsync(httpHelper, course.GetAuthorNameId(module.AuthorId), clipCounter - 1, module.ModuleId, _token);
-                        Caption[] unformattedSubtitles = JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson);
+                        string unformattedSubtitlesJson = 
+                            await _subtitleService.DownloadAsync(httpHelper, course.GetAuthorNameId(module.AuthorId), clipCounter - 1, module.ModuleId, clip.PureId, _token);
+                        Caption[] unformattedSubtitles =
+                            unformattedSubtitlesJson != "{\"message\":\"An error has occurred.\"}"
+                                ? JsonConvert.DeserializeObject<Caption[]>(unformattedSubtitlesJson)
+                                : new Caption[] { };
                         IList<SrtRecord> formattedSubtitles =
                             unformattedSubtitles.Any() 
                                 ? GetFormattedSubtitles(unformattedSubtitles, clip.Duration) 
